@@ -1,9 +1,11 @@
 package dev.anton_kulakov.config;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.anton_kulakov.filter.JsonAuthenticationFilter;
 import dev.anton_kulakov.service.UserDetailsServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -26,12 +28,10 @@ import java.util.Collections;
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
     private final UserDetailsServiceImpl userDetailsServiceImpl;
-
-    public SecurityConfig(UserDetailsServiceImpl userDetailsServiceImpl) {
-        this.userDetailsServiceImpl = userDetailsServiceImpl;
-    }
+    private final ObjectMapper objectMapper;
 
     @Bean
     SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -39,7 +39,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/index.html", "/config.js", "/assets/*").permitAll()
-                        .requestMatchers("/api/auth/sign-in").permitAll()
+                        .requestMatchers("/api/auth/sign-in", "/api/auth/sign-up").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jsonAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement(session -> session
@@ -49,7 +49,7 @@ public class SecurityConfig {
 
     @Bean
     public JsonAuthenticationFilter jsonAuthenticationFilter() {
-        JsonAuthenticationFilter filter = new JsonAuthenticationFilter();
+        JsonAuthenticationFilter filter = new JsonAuthenticationFilter(objectMapper);
         filter.setAuthenticationManager(authenticationManagerBean());
         filter.setFilterProcessesUrl("/api/auth/sign-in");
         filter.setAuthenticationSuccessHandler(this::onAuthenticationSuccess);

@@ -1,4 +1,4 @@
-package dev.anton_kulakov;
+package dev.anton_kulakov.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
