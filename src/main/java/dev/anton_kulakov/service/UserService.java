@@ -6,6 +6,7 @@ import dev.anton_kulakov.exception.UsernameAlreadyTakenException;
 import dev.anton_kulakov.model.User;
 import dev.anton_kulakov.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
+    private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public User createUser(SignUpDto signUpDto) {
@@ -23,6 +25,8 @@ public class UserService {
             throw new UsernameAlreadyTakenException("User with username %s is already exists".formatted(username));
         }
 
+        String encodedPassword = passwordEncoder.encode(signUpDto.getPassword());
+        signUpDto.setPassword(encodedPassword);
         User user = userMapper.toUser(signUpDto);
         return userRepository.save(user);
     }
