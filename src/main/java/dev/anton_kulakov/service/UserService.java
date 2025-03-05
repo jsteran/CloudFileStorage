@@ -1,6 +1,6 @@
 package dev.anton_kulakov.service;
 
-import dev.anton_kulakov.dto.SignUpDto;
+import dev.anton_kulakov.dto.SignUpRequestDto;
 import dev.anton_kulakov.dto.UserMapper;
 import dev.anton_kulakov.exception.UsernameAlreadyTakenException;
 import dev.anton_kulakov.model.User;
@@ -18,16 +18,16 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public User createUser(SignUpDto signUpDto) {
-        String username = signUpDto.getUsername();
+    public User createUser(SignUpRequestDto signUpRequestDto) {
+        String username = signUpRequestDto.getUsername();
 
         if (userRepository.existsByUsername(username)) {
             throw new UsernameAlreadyTakenException("User with username %s is already exists".formatted(username));
         }
 
-        String encodedPassword = passwordEncoder.encode(signUpDto.getPassword());
-        signUpDto.setPassword(encodedPassword);
-        User user = userMapper.toUser(signUpDto);
+        String encodedPassword = passwordEncoder.encode(signUpRequestDto.getPassword());
+        signUpRequestDto.setPassword(encodedPassword);
+        User user = userMapper.toUser(signUpRequestDto);
         return userRepository.save(user);
     }
 }
