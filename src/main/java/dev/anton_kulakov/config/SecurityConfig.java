@@ -25,6 +25,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.Map;
 
 @Configuration
 @EnableWebSecurity
@@ -77,11 +78,15 @@ public class SecurityConfig {
 
     private void onAuthenticationSuccess(HttpServletRequest req, HttpServletResponse resp, Authentication authentication) throws IOException {
         resp.setStatus(HttpStatus.OK.value());
-        resp.getWriter().write("{\"username\": \"" + authentication.getName() + "\"}");
+        resp.setContentType("application/json");
+        Map<String, String> response = Map.of("username", authentication.getName());
+        objectMapper.writeValue(resp.getWriter(), response);
     }
 
     private void onAuthenticationFailure(HttpServletRequest req, HttpServletResponse resp, AuthenticationException authenticationException) throws IOException {
         resp.setStatus(HttpStatus.BAD_REQUEST.value());
-        resp.getWriter().write("{\"error\": \"Invalid credentials\"}");
+        resp.setContentType("application/json");
+        Map<String, String> response = Map.of("error", "Invalid credentials");
+        objectMapper.writeValue(resp.getWriter(), response);
     }
 }

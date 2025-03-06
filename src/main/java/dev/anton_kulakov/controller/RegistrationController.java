@@ -7,6 +7,7 @@ import dev.anton_kulakov.model.User;
 import dev.anton_kulakov.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,6 +25,8 @@ public class RegistrationController {
     public ResponseEntity<SignUpResponseDto> createUser(@Valid @RequestBody SignUpRequestDto signUpRequestDto) {
         User user = userService.createUser(signUpRequestDto);
         SignUpResponseDto signUpResponseDto = userMapper.toResponseDto(user);
-        return ResponseEntity.ok(signUpResponseDto);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(signUpResponseDto);
     }
 }
