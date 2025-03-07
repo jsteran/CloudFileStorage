@@ -1,7 +1,7 @@
 package dev.anton_kulakov.controller;
 
-import dev.anton_kulakov.dto.SignUpRequestDto;
-import dev.anton_kulakov.dto.SignUpResponseDto;
+import dev.anton_kulakov.dto.UserRequestDto;
+import dev.anton_kulakov.dto.UserResponseDto;
 import dev.anton_kulakov.dto.UserMapper;
 import dev.anton_kulakov.model.User;
 import dev.anton_kulakov.service.UserService;
@@ -22,11 +22,11 @@ public class RegistrationController {
     private final UserMapper userMapper;
 
     @PostMapping
-    public ResponseEntity<SignUpResponseDto> createUser(@Valid @RequestBody SignUpRequestDto signUpRequestDto) {
-        User user = userService.createUser(signUpRequestDto);
-        SignUpResponseDto signUpResponseDto = userMapper.toResponseDto(user);
+    public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody UserRequestDto userRequestDto) {
+        User user = userService.createUser(userRequestDto);
+        UserResponseDto userResponseDto = userMapper.toResponseDto(user);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(signUpResponseDto);
+                .body(userResponseDto);
     }
 }

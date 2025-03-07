@@ -7,6 +7,6 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class SignUpResponseDto {
+public class UserResponseDto {
     private String username;
 }

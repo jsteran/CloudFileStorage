@@ -11,7 +11,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public class SignUpRequestDto {
+public class UserRequestDto {
     @NotEmpty(message = "Username should not be empty")
     @Size(min = 5, message = "Username should be longer than 5 characters")
     private String username;

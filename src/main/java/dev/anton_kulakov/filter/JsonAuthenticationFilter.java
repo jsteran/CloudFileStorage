@@ -1,7 +1,7 @@
 package dev.anton_kulakov.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.anton_kulakov.dto.SignInDto;
+import dev.anton_kulakov.dto.UserRequestDto;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -19,8 +19,8 @@ public class JsonAuthenticationFilter extends UsernamePasswordAuthenticationFilt
     @Override
     public Authentication attemptAuthentication(HttpServletRequest req, HttpServletResponse resp) {
         try {
-            SignInDto signInDto = objectMapper.readValue(req.getInputStream(), SignInDto.class);
-            UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(signInDto.getUsername(), signInDto.getPassword());
+            UserRequestDto userRequestDto = objectMapper.readValue(req.getInputStream(), UserRequestDto.class);
+            UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userRequestDto.getUsername(), userRequestDto.getPassword());
 
             return this.getAuthenticationManager().authenticate(usernamePasswordAuthenticationToken);
         } catch (IOException e) {
