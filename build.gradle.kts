@@ -32,6 +32,7 @@ dependencies {
 	implementation("org.liquibase:liquibase-core")
 	implementation("org.springframework.session:spring-session-core")
 	implementation("org.mapstruct:mapstruct:1.5.5.Final")
+	implementation("io.minio:minio:8.5.13")
 	annotationProcessor("org.mapstruct:mapstruct-processor:1.5.5.Final")
 	compileOnly("org.projectlombok:lombok")
 	developmentOnly("org.springframework.boot:spring-boot-docker-compose")
