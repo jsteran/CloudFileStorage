@@ -21,6 +21,8 @@ public class MinioService {
     private String bucketName;
 
     private final MinioClient minioClient;
+    private final static String DIRECTORY_TYPE = "DIRECTORY";
+    private final static String FILE_TYPE = "FILE";
 
     public ResourceInfoDto getResourceInfoDto(String name) {
         ResourceInfoDto resourceInfoDto;
@@ -39,7 +41,7 @@ public class MinioService {
             ResourceInfoDto directoryInfoDto = new ResourceInfoDto();
             directoryInfoDto.setPath(name);
             directoryInfoDto.setName(getLastFolderName(name));
-            directoryInfoDto.setType("DIRECTORY");
+            directoryInfoDto.setType(DIRECTORY_TYPE);
 
             return directoryInfoDto;
         } catch (Exception e) {
@@ -74,7 +76,7 @@ public class MinioService {
             resourceInfoDto.setPath(statObjectResponse.object());
             resourceInfoDto.setName(Paths.get(statObjectResponse.object()).getFileName().toString());
             resourceInfoDto.setSize(statObjectResponse.size());
-            resourceInfoDto.setType("FILE");
+            resourceInfoDto.setType(FILE_TYPE);
 
             return resourceInfoDto;
         } catch (Exception e) {
