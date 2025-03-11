@@ -41,6 +41,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/index.html", "/config.js", "/assets/*").permitAll()
                         .requestMatchers("/api/auth/sign-in", "/api/auth/sign-up").permitAll()
+                        .requestMatchers("api/resource").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jsonAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement(session -> session
