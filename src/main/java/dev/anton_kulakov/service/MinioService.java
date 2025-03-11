@@ -2,15 +2,18 @@ package dev.anton_kulakov.service;
 
 import dev.anton_kulakov.dto.ResourceInfoDto;
 import dev.anton_kulakov.exception.MinioException;
-import io.minio.MinioClient;
-import io.minio.StatObjectArgs;
-import io.minio.StatObjectResponse;
+import dev.anton_kulakov.exception.ResourceNotFoundException;
+import io.minio.*;
+import io.minio.messages.DeleteError;
+import io.minio.messages.DeleteObject;
+import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 
 @Service
@@ -24,23 +27,87 @@ public class MinioService {
     private final static String DIRECTORY_TYPE = "DIRECTORY";
     private final static String FILE_TYPE = "FILE";
 
-    public ResourceInfoDto getResourceInfoDto(String name) {
+    public ResourceInfoDto getResourceInfoDto(String resourceName) {
         ResourceInfoDto resourceInfoDto;
 
-        if (name.endsWith("/")) {
-            resourceInfoDto = getDirectoryInfoDto(name);
+        if (resourceName.endsWith("/")) {
+            resourceInfoDto = getDirectoryInfoDto(resourceName);
         } else {
-            resourceInfoDto = getFileInfoDto(name);
+            resourceInfoDto = getFileInfoDto(resourceName);
         }
 
         return resourceInfoDto;
     }
 
-    private ResourceInfoDto getDirectoryInfoDto(String name) {
+    public void deleteResource(String resourceName) {
+        if (resourceName.endsWith("/")) {
+            deleteDirectory(resourceName);
+        } else {
+            deleteFile(resourceName);
+        }
+    }
+
+    private void deleteDirectory(String fullDirectoryName) {
+        List<DeleteObject> objects = getObjectsToDelete(fullDirectoryName);
+
+        if (!objects.isEmpty()) {
+            Iterable<Result<DeleteError>> deleteResults = minioClient.removeObjects(RemoveObjectsArgs.builder()
+                    .bucket(bucketName)
+                    .objects(objects)
+                    .build());
+
+            for (Result<DeleteError> result : deleteResults) {
+                try {
+                    DeleteError error = result.get();
+                    System.err.println("Failed to delete: " + error.objectName() + " - " + error.message());
+                } catch (Exception e) {
+                    throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
+                }
+            }
+        } else {
+            throw new ResourceNotFoundException("Folder is empty or does not exist");
+        }
+    }
+
+    private List<DeleteObject> getObjectsToDelete(String fullDirectoryName) {
+        try {
+            List<DeleteObject> objects = new LinkedList<>();
+            Iterable<Result<Item>> results = minioClient.listObjects(
+                    ListObjectsArgs.builder()
+                            .bucket(bucketName)
+                            .prefix(fullDirectoryName)
+                            .recursive(true)
+                            .build()
+            );
+
+            for (Result<Item> result : results) {
+                Item item = result.get();
+                objects.add(new DeleteObject(item.objectName()));
+            }
+            return objects;
+
+        } catch (Exception e) {
+            throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
+        }
+    }
+
+    private void deleteFile(String fileName) {
+        try {
+            minioClient.removeObject(RemoveObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(fileName)
+                    .build());
+        } catch (Exception e) {
+            throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
+        }
+    }
+
+
+    private ResourceInfoDto getDirectoryInfoDto(String resourceName) {
         try {
             ResourceInfoDto directoryInfoDto = new ResourceInfoDto();
-            directoryInfoDto.setPath(name);
-            directoryInfoDto.setName(getLastFolderName(name));
+            directoryInfoDto.setPath(resourceName);
+            directoryInfoDto.setName(getLastFolderName(resourceName));
             directoryInfoDto.setType(DIRECTORY_TYPE);
 
             return directoryInfoDto;
@@ -49,12 +116,12 @@ public class MinioService {
         }
     }
 
-    private String getLastFolderName(String name) {
-        if (name == null || name.isBlank()) {
+    private String getLastFolderName(String resourceName) {
+        if (resourceName == null || resourceName.isBlank()) {
             return "";
         }
 
-        List<String> clearedOfEmptyPartsName = Arrays.stream(name.split("/"))
+        List<String> clearedOfEmptyPartsName = Arrays.stream(resourceName.split("/"))
                 .filter(s -> !s.isBlank())
                 .toList();
 
@@ -65,11 +132,11 @@ public class MinioService {
         return clearedOfEmptyPartsName.get(clearedOfEmptyPartsName.size() - 1) + "/";
     }
 
-    private ResourceInfoDto getFileInfoDto(String name) {
+    private ResourceInfoDto getFileInfoDto(String resourceName) {
         try {
             StatObjectResponse statObjectResponse = minioClient.statObject(StatObjectArgs.builder()
                     .bucket(bucketName)
-                    .object(name)
+                    .object(resourceName)
                     .build());
 
             ResourceInfoDto resourceInfoDto = new ResourceInfoDto();
