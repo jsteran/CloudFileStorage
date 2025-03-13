@@ -11,10 +11,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Consumer;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +46,17 @@ public class MinioService {
             deleteDirectory(resourceName);
         } else {
             deleteFile(resourceName);
+        }
+    }
+
+    public void streamFile(String fileName, Consumer<InputStream> streamConsumer) {
+        try (InputStream inputStream = minioClient.getObject(GetObjectArgs.builder()
+                .bucket(bucketName)
+                .object(fileName)
+                .build())) {
+            streamConsumer.accept(inputStream);
+        } catch (Exception e) {
+            throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
         }
     }
 
