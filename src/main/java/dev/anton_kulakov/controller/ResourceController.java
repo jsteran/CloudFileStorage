@@ -19,19 +19,19 @@ public class ResourceController {
     private final ResourceDownloadHandlerFactory downloadHandlerFactory;
 
     @GetMapping("/api/resource")
-    public ResponseEntity<ResourceInfoDto> getResourceInfo(@RequestParam String path) {
+    public ResponseEntity<ResourceInfoDto> getInfo(@RequestParam String path) {
         ResourceInfoDto resourceInfoDto = minioService.getResourceInfoDto(path);
         return ResponseEntity.ok(resourceInfoDto);
     }
 
     @GetMapping("/api/resource/download")
-    public ResponseEntity<StreamingResponseBody> downloadFolder(@RequestParam String path) {
+    public ResponseEntity<StreamingResponseBody> download(@RequestParam String path) {
         ResourceDownloadHandler downloadHandler = downloadHandlerFactory.getDownloadHandler(path);
         return downloadHandler.download(path);
     }
 
     @DeleteMapping
-    public ResponseEntity<Void> deleteResource(@RequestParam String path) {
+    public ResponseEntity<Void> delete(@RequestParam String path) {
         minioService.deleteResource(path);
         return ResponseEntity.noContent().build();
     }
