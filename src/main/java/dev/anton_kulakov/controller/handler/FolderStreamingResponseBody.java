@@ -1,4 +1,4 @@
-package dev.anton_kulakov.controller;
+package dev.anton_kulakov.controller.handler;
 
 import dev.anton_kulakov.exception.MinioException;
 import dev.anton_kulakov.service.MinioService;

@@ -1,4 +1,4 @@
-package dev.anton_kulakov.controller;
+package dev.anton_kulakov.controller.handler;
 
 import dev.anton_kulakov.exception.MinioException;
 import dev.anton_kulakov.service.MinioService;
@@ -11,7 +11,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 @RequiredArgsConstructor
-public class ResourceStreamingResponseBody implements StreamingResponseBody {
+public class FileStreamingResponseBody implements StreamingResponseBody {
     private final MinioService minioService;
     private final String resourceName;
 
