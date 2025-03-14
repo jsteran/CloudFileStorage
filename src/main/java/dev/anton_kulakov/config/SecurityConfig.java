@@ -43,6 +43,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/sign-in", "/api/auth/sign-up").permitAll()
                         .requestMatchers("api/resource").permitAll()
                         .requestMatchers("api/resource/download").permitAll()
+                        .requestMatchers("api/resource/filedownload").permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jsonAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement(session -> session
