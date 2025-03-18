@@ -1,9 +1,8 @@
 package dev.anton_kulakov.controller;
 
-import dev.anton_kulakov.controller.handler.ResourceDownloadHandler;
-import dev.anton_kulakov.controller.handler.ResourceDownloadHandlerFactory;
 import dev.anton_kulakov.dto.ResourceInfoDto;
-import dev.anton_kulakov.service.MinioService;
+import dev.anton_kulakov.dto.StreamingResponseFactory;
+import dev.anton_kulakov.service.ResourceServiceFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -15,24 +14,25 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 @RestController
 @RequiredArgsConstructor
 public class ResourceController {
-    private final MinioService minioService;
-    private final ResourceDownloadHandlerFactory downloadHandlerFactory;
+    private final ResourceServiceFactory resourceServiceFactory;
+    private final StreamingResponseFactory streamingResponseFactory;
 
     @GetMapping("/api/resource")
     public ResponseEntity<ResourceInfoDto> getInfo(@RequestParam String path) {
-        ResourceInfoDto resourceInfoDto = minioService.getResourceInfoDto(path);
-        return ResponseEntity.ok(resourceInfoDto);
+        ResourceInfoDto resourceInfoDto = resourceServiceFactory.getService(path).getInfo(path);
+        return ResponseEntity.ok().body(resourceInfoDto);
     }
 
     @GetMapping("/api/resource/download")
     public ResponseEntity<StreamingResponseBody> download(@RequestParam String path) {
-        ResourceDownloadHandler downloadHandler = downloadHandlerFactory.getDownloadHandler(path);
-        return downloadHandler.download(path);
+        return ResponseEntity.ok()
+                .contentType(streamingResponseFactory.getContentType(path))
+                .body(streamingResponseFactory.createResponse(path));
     }
 
-    @DeleteMapping
+    @DeleteMapping("/api/resource")
     public ResponseEntity<Void> delete(@RequestParam String path) {
-        minioService.deleteResource(path);
+        resourceServiceFactory.getService(path).delete(path);
         return ResponseEntity.noContent().build();
     }
 }

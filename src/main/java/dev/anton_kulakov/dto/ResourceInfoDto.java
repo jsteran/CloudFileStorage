@@ -17,5 +17,5 @@ public class ResourceInfoDto {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private Long size;
 
-    private String type;
+    private ResourceTypeEnum type;
 }
