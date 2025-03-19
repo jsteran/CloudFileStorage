@@ -3,7 +3,9 @@ package dev.anton_kulakov.service;
 import dev.anton_kulakov.dto.ResourceInfoDto;
 import dev.anton_kulakov.dto.ResourceTypeEnum;
 import dev.anton_kulakov.exception.MinioException;
-import io.minio.*;
+import io.minio.MinioClient;
+import io.minio.StatObjectArgs;
+import io.minio.StatObjectResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -29,30 +31,6 @@ public class MinioHelper {
         }
 
         return statObjectResponse;
-    }
-
-    public void moveResource(String from, String to) {
-        try {
-            minioClient.copyObject(CopyObjectArgs.builder()
-                    .bucket(BUCKET_NAME)
-                    .object(to)
-                    .source(CopySource.builder()
-                            .bucket(BUCKET_NAME)
-                            .object(from)
-                            .build())
-                    .build());
-        } catch (Exception e) {
-            try {
-                minioClient.removeObject(RemoveObjectArgs.builder()
-                        .bucket(BUCKET_NAME)
-                        .object(to)
-                        .build());
-            } catch (Exception ex) {
-                throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
-            }
-
-            throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
-        }
     }
 
     public ResourceInfoDto convertToFileDto(StatObjectResponse statObjectResponse) {

@@ -2,10 +2,7 @@ package dev.anton_kulakov.service;
 
 import dev.anton_kulakov.dto.ResourceInfoDto;
 import dev.anton_kulakov.exception.MinioException;
-import io.minio.GetObjectArgs;
-import io.minio.MinioClient;
-import io.minio.RemoveObjectArgs;
-import io.minio.StatObjectResponse;
+import io.minio.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -40,7 +37,27 @@ public class FileService implements ResourceServiceInterface {
 
     @Override
     public void move(String from, String to) {
-        minioHelper.moveResource(from, to);
+        try {
+            minioClient.copyObject(CopyObjectArgs.builder()
+                    .bucket(BUCKET_NAME)
+                    .object(to)
+                    .source(CopySource.builder()
+                            .bucket(BUCKET_NAME)
+                            .object(from)
+                            .build())
+                    .build());
+        } catch (Exception e) {
+            try {
+                minioClient.removeObject(RemoveObjectArgs.builder()
+                        .bucket(BUCKET_NAME)
+                        .object(to)
+                        .build());
+            } catch (Exception ex) {
+                throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
+            }
+
+            throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
+        }
     }
 
     public void streamFile(String fileName, Consumer<InputStream> streamConsumer) {
