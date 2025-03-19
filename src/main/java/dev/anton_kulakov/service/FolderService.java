@@ -54,6 +54,11 @@ public class FolderService implements ResourceServiceInterface {
         }
     }
 
+    @Override
+    public void move(String from, String to) {
+        minioHelper.moveResource(from, to);
+    }
+
     public List<String> getResourcesNamesInFolder(String folderPath) {
         ArrayList<String> resourcesNames = new ArrayList<>();
 

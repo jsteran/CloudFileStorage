@@ -6,4 +6,6 @@ public interface ResourceServiceInterface {
     ResourceInfoDto getInfo(String resourceName);
 
     void delete(String resourceName);
+
+    void move(String from, String to);
 }

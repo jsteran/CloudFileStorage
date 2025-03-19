@@ -3,9 +3,7 @@ package dev.anton_kulakov.service;
 import dev.anton_kulakov.dto.ResourceInfoDto;
 import dev.anton_kulakov.dto.ResourceTypeEnum;
 import dev.anton_kulakov.exception.MinioException;
-import io.minio.MinioClient;
-import io.minio.StatObjectArgs;
-import io.minio.StatObjectResponse;
+import io.minio.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,19 +16,43 @@ public class MinioHelper {
     private final PathHelper pathHelper;
     private static final String BUCKET_NAME = "user-files";
 
-    public StatObjectResponse getResourceInfo(String resourceName) {
+    public StatObjectResponse getResourceInfo(String resourcePath) {
         StatObjectResponse statObjectResponse;
 
         try {
             statObjectResponse = minioClient.statObject(StatObjectArgs.builder()
                     .bucket(BUCKET_NAME)
-                    .object(resourceName)
+                    .object(resourcePath)
                     .build());
         } catch (Exception e) {
             throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
         }
 
         return statObjectResponse;
+    }
+
+    public void moveResource(String from, String to) {
+        try {
+            minioClient.copyObject(CopyObjectArgs.builder()
+                    .bucket(BUCKET_NAME)
+                    .object(to)
+                    .source(CopySource.builder()
+                            .bucket(BUCKET_NAME)
+                            .object(from)
+                            .build())
+                    .build());
+        } catch (Exception e) {
+            try {
+                minioClient.removeObject(RemoveObjectArgs.builder()
+                        .bucket(BUCKET_NAME)
+                        .object(to)
+                        .build());
+            } catch (Exception ex) {
+                throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
+            }
+
+            throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
+        }
     }
 
     public ResourceInfoDto convertToFileDto(StatObjectResponse statObjectResponse) {

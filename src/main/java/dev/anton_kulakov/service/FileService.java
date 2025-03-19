@@ -38,6 +38,11 @@ public class FileService implements ResourceServiceInterface {
         }
     }
 
+    @Override
+    public void move(String from, String to) {
+        minioHelper.moveResource(from, to);
+    }
+
     public void streamFile(String fileName, Consumer<InputStream> streamConsumer) {
         try (InputStream inputStream = minioClient.getObject(GetObjectArgs.builder()
                 .bucket(BUCKET_NAME)
