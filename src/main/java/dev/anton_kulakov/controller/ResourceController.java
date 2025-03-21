@@ -40,7 +40,6 @@ public class ResourceController {
     public ResponseEntity<ResourceInfoDto> move(@RequestParam String from, @RequestParam String to) {
         resourceServiceFactory.getService(from).move(from, to);
         ResourceInfoDto resourceInfoDto = resourceServiceFactory.getService(to).getInfo(to);
-        resourceServiceFactory.getService(from).delete(from);
         return ResponseEntity.ok().body(resourceInfoDto);
     }
 }

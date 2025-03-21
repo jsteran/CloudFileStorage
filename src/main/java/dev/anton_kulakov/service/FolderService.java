@@ -3,10 +3,7 @@ package dev.anton_kulakov.service;
 import dev.anton_kulakov.dto.ResourceInfoDto;
 import dev.anton_kulakov.exception.MinioException;
 import dev.anton_kulakov.exception.ResourceNotFoundException;
-import io.minio.ListObjectsArgs;
-import io.minio.MinioClient;
-import io.minio.RemoveObjectsArgs;
-import io.minio.Result;
+import io.minio.*;
 import io.minio.messages.DeleteError;
 import io.minio.messages.DeleteObject;
 import io.minio.messages.Item;
@@ -20,8 +17,10 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class FolderService implements ResourceServiceInterface {
+    private final FileService fileService;
     private final MinioClient minioClient;
     private final MinioHelper minioHelper;
+    private final PathHelper pathHelper;
     private static final String BUCKET_NAME = "user-files";
 
     @Override
@@ -56,7 +55,28 @@ public class FolderService implements ResourceServiceInterface {
 
     @Override
     public void move(String from, String to) {
+        List<String> resourcesNamesInFolder = getResourcesNamesInFolder(from);
 
+        for (String resource : resourcesNamesInFolder) {
+            String relativePath = pathHelper.getRelativePath(from, resource);
+
+            try {
+                minioClient.copyObject(CopyObjectArgs.builder()
+                        .bucket(BUCKET_NAME)
+                        .object(to + relativePath)
+                        .source(CopySource.builder()
+                                .bucket(BUCKET_NAME)
+                                .object(resource)
+                                .build())
+                        .build());
+            } catch (Exception e) {
+                throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
+            }
+        }
+
+        for (String resource : resourcesNamesInFolder) {
+            fileService.delete(resource);
+        }
     }
 
     public List<String> getResourcesNamesInFolder(String folderPath) {

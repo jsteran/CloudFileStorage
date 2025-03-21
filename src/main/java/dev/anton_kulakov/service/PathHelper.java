@@ -7,12 +7,12 @@ import java.util.List;
 
 @Component
 public class PathHelper {
-    public String getLastFolderName(String resourceName) {
-        if (resourceName == null || resourceName.isBlank()) {
+    public String getLastFolderName(String resourcePath) {
+        if (resourcePath == null || resourcePath.isBlank()) {
             return "";
         }
 
-        List<String> clearedOfEmptyPartsName = Arrays.stream(resourceName.split("/"))
+        List<String> clearedOfEmptyPartsName = Arrays.stream(resourcePath.split("/"))
                 .filter(s -> !s.isBlank())
                 .toList();
 
@@ -23,7 +23,7 @@ public class PathHelper {
         return clearedOfEmptyPartsName.get(clearedOfEmptyPartsName.size() - 1) + "/";
     }
 
-    public String getRelativePath(String pathWithoutResourceName, String fullResourceName) {
-        return fullResourceName.substring(pathWithoutResourceName.length());
+    public String getRelativePath(String pathWithoutResourceName, String fullResourcePath) {
+        return fullResourcePath.substring(pathWithoutResourceName.length());
     }
 }
