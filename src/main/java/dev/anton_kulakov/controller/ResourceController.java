@@ -2,6 +2,7 @@ package dev.anton_kulakov.controller;
 
 import dev.anton_kulakov.dto.ResourceInfoDto;
 import dev.anton_kulakov.dto.StreamingResponseFactory;
+import dev.anton_kulakov.service.FileService;
 import dev.anton_kulakov.service.ResourceServiceFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -11,11 +12,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.util.List;
+
 @RestController
 @RequiredArgsConstructor
 public class ResourceController {
     private final ResourceServiceFactory resourceServiceFactory;
     private final StreamingResponseFactory streamingResponseFactory;
+    private final FileService fileService;
 
     @GetMapping("/api/resource")
     public ResponseEntity<ResourceInfoDto> getInfo(@RequestParam String path) {
@@ -41,5 +45,11 @@ public class ResourceController {
         resourceServiceFactory.getService(from).move(from, to);
         ResourceInfoDto resourceInfoDto = resourceServiceFactory.getService(to).getInfo(to);
         return ResponseEntity.ok().body(resourceInfoDto);
+    }
+
+    @GetMapping("/api/resource/search")
+    public ResponseEntity<List<ResourceInfoDto>> search(@RequestParam String query) {
+        List<ResourceInfoDto> resources = fileService.search(query);
+        return ResponseEntity.ok().body(resources);
     }
 }

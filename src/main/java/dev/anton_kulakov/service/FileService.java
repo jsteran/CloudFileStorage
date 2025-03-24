@@ -3,10 +3,13 @@ package dev.anton_kulakov.service;
 import dev.anton_kulakov.dto.ResourceInfoDto;
 import dev.anton_kulakov.exception.MinioException;
 import io.minio.*;
+import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 @Service
@@ -14,6 +17,7 @@ import java.util.function.Consumer;
 public class FileService implements ResourceServiceInterface {
     private final MinioClient minioClient;
     private final MinioHelper minioHelper;
+    private final PathHelper pathHelper;
     private static final String BUCKET_NAME = "user-files";
 
 
@@ -58,6 +62,41 @@ public class FileService implements ResourceServiceInterface {
 
             throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
         }
+    }
+
+    public List<ResourceInfoDto> search(String query) {
+        Iterable<Result<Item>> allResources = getAllResources();
+        ArrayList<ResourceInfoDto> foundFiles = new ArrayList<>();
+
+        for (Result<Item> resource : allResources) {
+            try {
+                String fileName = pathHelper.getFileName(resource.get().objectName());
+
+                if (isFile(resource) && fileName.contains(query)) {
+                    Item foundedFile = resource.get();
+                    foundFiles.add(minioHelper.convertToFileDto(foundedFile));
+                }
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        return foundFiles;
+    }
+
+    private static boolean isFile(Result<Item> resource) {
+        try {
+            return !resource.get().objectName().endsWith("/");
+        } catch (Exception e) {
+            throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
+        }
+    }
+
+    public Iterable<Result<Item>> getAllResources() {
+        return minioClient.listObjects(ListObjectsArgs.builder()
+                .bucket(BUCKET_NAME)
+                .recursive(true)
+                .build());
     }
 
     public void streamFile(String fileName, Consumer<InputStream> streamConsumer) {

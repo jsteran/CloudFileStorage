@@ -26,4 +26,29 @@ public class PathHelper {
     public String getRelativePath(String pathWithoutResourceName, String fullResourcePath) {
         return fullResourcePath.substring(pathWithoutResourceName.length());
     }
+
+    public String getFileName(String objectName) {
+        String[] splitObjectName;
+
+        try {
+            splitObjectName = objectName.split("/");
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        return splitObjectName[splitObjectName.length - 1];
+    }
+
+    public String getFolderPath(String fullPath, String fileName) {
+
+        if (fullPath.endsWith(fileName)) {
+            int lastSlashIndex = fullPath.lastIndexOf("/");
+
+            if (lastSlashIndex != -1) {
+                return fullPath.substring(0, lastSlashIndex + 1);
+            }
+        }
+
+        return fullPath;
+    }
 }

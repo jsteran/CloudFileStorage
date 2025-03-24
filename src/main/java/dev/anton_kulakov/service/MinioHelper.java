@@ -6,6 +6,7 @@ import dev.anton_kulakov.exception.MinioException;
 import io.minio.MinioClient;
 import io.minio.StatObjectArgs;
 import io.minio.StatObjectResponse;
+import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -35,9 +36,27 @@ public class MinioHelper {
 
     public ResourceInfoDto convertToFileDto(StatObjectResponse statObjectResponse) {
         ResourceInfoDto resourceInfoDto = new ResourceInfoDto();
-        resourceInfoDto.setPath(statObjectResponse.object());
-        resourceInfoDto.setName(Paths.get(statObjectResponse.object()).getFileName().toString());
+        String fileName = pathHelper.getFileName(statObjectResponse.object());
+        String folderPath = pathHelper.getFolderPath(statObjectResponse.object(), fileName);
+
+        resourceInfoDto.setPath(folderPath);
+        resourceInfoDto.setName(fileName);
         resourceInfoDto.setSize(statObjectResponse.size());
+        resourceInfoDto.setType(ResourceTypeEnum.FILE);
+
+        return resourceInfoDto;
+    }
+
+    public ResourceInfoDto convertToFileDto(Item minioItem) {
+        int a = 123;
+
+        String fileName = pathHelper.getFileName(minioItem.objectName());
+        String folderPath = pathHelper.getFolderPath(minioItem.objectName(), fileName);
+
+        ResourceInfoDto resourceInfoDto = new ResourceInfoDto();
+        resourceInfoDto.setPath(folderPath);
+        resourceInfoDto.setName(fileName);
+        resourceInfoDto.setSize(minioItem.size());
         resourceInfoDto.setType(ResourceTypeEnum.FILE);
 
         return resourceInfoDto;
