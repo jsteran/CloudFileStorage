@@ -6,6 +6,7 @@ import io.minio.*;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -105,6 +106,19 @@ public class FileService implements ResourceServiceInterface {
                 .object(fileName)
                 .build())) {
             streamConsumer.accept(inputStream);
+        } catch (Exception e) {
+            throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
+        }
+    }
+
+    public void upload(String path, MultipartFile file) {
+        try {
+            minioClient.putObject(PutObjectArgs.builder()
+                            .bucket(BUCKET_NAME)
+                            .object(path + file.getOriginalFilename())
+                            .stream(file.getInputStream(), file.getSize(), -1)
+                            .contentType(file.getContentType())
+                    .build());
         } catch (Exception e) {
             throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
         }

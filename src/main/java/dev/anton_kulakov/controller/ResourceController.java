@@ -5,11 +5,10 @@ import dev.anton_kulakov.dto.StreamingResponseFactory;
 import dev.anton_kulakov.service.FileService;
 import dev.anton_kulakov.service.ResourceServiceFactory;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.util.List;
@@ -51,5 +50,15 @@ public class ResourceController {
     public ResponseEntity<List<ResourceInfoDto>> search(@RequestParam String query) {
         List<ResourceInfoDto> resources = fileService.search(query);
         return ResponseEntity.ok().body(resources);
+    }
+
+    @PostMapping("/api/resource")
+    public ResponseEntity<ResourceInfoDto> upload(@RequestParam String path, @RequestParam MultipartFile file) {
+        fileService.upload(path, file);
+        String newPath = path + file.getOriginalFilename();
+        ResourceInfoDto resourceInfoDto = resourceServiceFactory.getService(newPath).getInfo(newPath);
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(resourceInfoDto);
     }
 }
