@@ -4,11 +4,11 @@ window.APP_CONFIG = {
     githubLink: "https://github.com/anton-kulakov/CloudFileStorage",
 
     //Имя, которое отображается в хедере
-    mainName: "CLOUD FILE STORAGE",
+    mainName: "CLOUD STORAGE",
 
     //адрес вашего бэка. если пустой - значит на одном url с таким же портом.
     //если запускаете бэк и фронт через докер compose - тут ставите имя бэка в докер сети
-    baseUrl: "http://localhost:8080",
+    baseUrl: "",
 
     //API префикс вашего бэка
     baseApi: "/api",
