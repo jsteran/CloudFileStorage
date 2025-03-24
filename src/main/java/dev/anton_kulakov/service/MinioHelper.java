@@ -10,8 +10,6 @@ import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.nio.file.Paths;
-
 @Component
 @RequiredArgsConstructor
 public class MinioHelper {
@@ -48,8 +46,6 @@ public class MinioHelper {
     }
 
     public ResourceInfoDto convertToFileDto(Item minioItem) {
-        int a = 123;
-
         String fileName = pathHelper.getFileName(minioItem.objectName());
         String folderPath = pathHelper.getFolderPath(minioItem.objectName(), fileName);
 
