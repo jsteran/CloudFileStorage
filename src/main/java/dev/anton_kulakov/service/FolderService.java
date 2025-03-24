@@ -10,6 +10,7 @@ import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -134,5 +135,17 @@ public class FolderService implements ResourceServiceInterface {
                 .prefix(path)
                 .recursive(false)
                 .build());
+    }
+
+    public void create(String path) {
+        try {
+            minioClient.putObject(PutObjectArgs.builder()
+                    .bucket(BUCKET_NAME)
+                    .object(path)
+                    .stream(new ByteArrayInputStream(new byte[0]), 0, -1)
+                    .build());
+        } catch (Exception e) {
+            throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
+        }
     }
 }
