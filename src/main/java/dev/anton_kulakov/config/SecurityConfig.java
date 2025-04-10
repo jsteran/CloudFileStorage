@@ -35,22 +35,18 @@ public class SecurityConfig {
     private final ObjectMapper objectMapper;
 
     @Bean
-    SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/index.html", "/config.js", "/assets/*").permitAll()
-                        .requestMatchers("/api/auth/sign-in", "/api/auth/sign-up").permitAll()
-                        .requestMatchers("api/resource").permitAll()
-                        .requestMatchers("api/resource/download").permitAll()
-                        .requestMatchers("api/resource/move").permitAll()
-                        .requestMatchers("api/resource/search").permitAll()
-                        .requestMatchers("api/resource/upload").permitAll()
-                        .requestMatchers("api/directory").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll()
                         .anyRequest().authenticated())
-                .addFilterBefore(jsonAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterAt(jsonAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                        .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
+                        .sessionFixation().changeSessionId()
+                        .maximumSessions(1))
                 .build();
     }
 

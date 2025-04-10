@@ -51,4 +51,8 @@ public class PathHelper {
 
         return fullPath;
     }
+
+    public String getUserRootFolder(int userId) {
+        return "user-" + userId + "-files/";
+    }
 }

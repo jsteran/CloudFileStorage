@@ -11,6 +11,10 @@ import java.util.Collections;
 public class SecurityUser implements UserDetails {
     private final User user;
 
+    public int getUserId() {
+        return user.getId();
+    }
+
     @Override
     public String getUsername() {
         return user.getUsername();

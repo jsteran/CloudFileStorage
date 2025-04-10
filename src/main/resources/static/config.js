@@ -1,7 +1,7 @@
 window.APP_CONFIG = {
 
     //ссылка на ваш гитхаб репозиторий с проектом
-    githubLink: "https://github.com/anton-kulakov/CloudFileStorage",
+    githubLink: "https://gist.github.com/anton-kulakov/CloudFileStorage",
 
     //Имя, которое отображается в хедере
     mainName: "CLOUD STORAGE",

@@ -26,7 +26,21 @@ public class FolderService implements ResourceServiceInterface {
 
     @Override
     public ResourceInfoDto getInfo(String folderName) {
+        if (!isFolderExists(folderName)) {
+            throw new ResourceNotFoundException("The folder with the path %s could not be found".formatted(folderName));
+        }
+
         return minioHelper.convertToFolderDto(folderName);
+    }
+
+    private boolean isFolderExists(String folderName) {
+        return minioClient.listObjects(ListObjectsArgs.builder()
+                        .bucket(BUCKET_NAME)
+                        .prefix(folderName)
+                        .maxKeys(1)
+                        .recursive(false)
+                        .build())
+                .iterator().hasNext();
     }
 
     @Override
@@ -105,7 +119,7 @@ public class FolderService implements ResourceServiceInterface {
     }
 
     public ArrayList<ResourceInfoDto> getContent(String path) {
-        Iterable<Result<Item>> allResources = getAllResources(path);
+        Iterable<Result<Item>> allResources = getAllResourcesFromUserFolder(path);
         ArrayList<ResourceInfoDto> resourcesFound = new ArrayList<>();
 
         for (Result<Item> resource : allResources) {
@@ -115,7 +129,7 @@ public class FolderService implements ResourceServiceInterface {
                 ResourceInfoDto resourceInfoDto;
 
                 if (resourceName.endsWith("/")) {
-                    resourceInfoDto = minioHelper.convertToFolderDto(resourceName);
+                    resourceInfoDto = minioHelper.convertToFolderDto(resource.get().objectName());
                 } else {
                     resourceInfoDto = minioHelper.convertToFileDto(resource.get());
                 }
@@ -129,7 +143,7 @@ public class FolderService implements ResourceServiceInterface {
         return resourcesFound;
     }
 
-    private Iterable<Result<Item>> getAllResources(String path) {
+    private Iterable<Result<Item>> getAllResourcesFromUserFolder(String path) {
         return minioClient.listObjects(ListObjectsArgs.builder()
                 .bucket(BUCKET_NAME)
                 .prefix(path)

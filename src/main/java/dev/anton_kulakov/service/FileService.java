@@ -24,8 +24,18 @@ public class FileService implements ResourceServiceInterface {
 
     @Override
     public ResourceInfoDto getInfo(String fileName) {
-        StatObjectResponse resourceInfo = minioHelper.getResourceInfo(fileName);
-        return minioHelper.convertToFileDto(resourceInfo);
+        StatObjectResponse statObjectResponse;
+
+        try {
+            statObjectResponse = minioClient.statObject(StatObjectArgs.builder()
+                    .bucket(BUCKET_NAME)
+                    .object(fileName)
+                    .build());
+        } catch (Exception e) {
+            throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
+        }
+
+        return minioHelper.convertToFileDto(statObjectResponse);
     }
 
     @Override
@@ -114,10 +124,10 @@ public class FileService implements ResourceServiceInterface {
     public void upload(String path, MultipartFile file) {
         try {
             minioClient.putObject(PutObjectArgs.builder()
-                            .bucket(BUCKET_NAME)
-                            .object(path + file.getOriginalFilename())
-                            .stream(file.getInputStream(), file.getSize(), -1)
-                            .contentType(file.getContentType())
+                    .bucket(BUCKET_NAME)
+                    .object(path + file.getOriginalFilename())
+                    .stream(file.getInputStream(), file.getSize(), -1)
+                    .contentType(file.getContentType())
                     .build());
         } catch (Exception e) {
             throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
