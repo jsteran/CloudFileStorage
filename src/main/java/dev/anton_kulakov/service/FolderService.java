@@ -124,17 +124,17 @@ public class FolderService implements ResourceServiceInterface {
 
         for (Result<Item> resource : allResources) {
             try {
-
                 String resourceName = resource.get().objectName();
                 ResourceInfoDto resourceInfoDto;
 
-                if (resourceName.endsWith("/")) {
+                if (resourceName.endsWith("/") && resource.get().isDir()) {
                     resourceInfoDto = minioHelper.convertToFolderDto(resource.get().objectName());
-                } else {
+                    resourcesFound.add(resourceInfoDto);
+                } else if (!resourceName.endsWith("/")) {
                     resourceInfoDto = minioHelper.convertToFileDto(resource.get());
+                    resourcesFound.add(resourceInfoDto);
                 }
 
-                resourcesFound.add(resourceInfoDto);
             } catch (Exception e) {
                 throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
             }

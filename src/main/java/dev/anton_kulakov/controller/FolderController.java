@@ -33,7 +33,7 @@ public class FolderController {
                                                   @RequestParam String path) {
         String userRootFolder = pathHelper.getUserRootFolder(securityUser.getUserId());
         folderService.create(userRootFolder + path);
-        ResourceInfoDto resourceInfoDto = folderService.getInfo(path);
+        ResourceInfoDto resourceInfoDto = folderService.getInfo(userRootFolder + path);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(resourceInfoDto);
