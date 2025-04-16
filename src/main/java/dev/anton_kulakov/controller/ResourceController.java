@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -57,15 +58,21 @@ public class ResourceController {
     }
 
     @PostMapping("/api/resource")
-    public ResponseEntity<ResourceInfoDto> upload(@AuthenticationPrincipal SecurityUser securityUser,
+    public ResponseEntity<List<ResourceInfoDto>> upload(@AuthenticationPrincipal SecurityUser securityUser,
                                                   @RequestParam String path,
-                                                  @RequestParam MultipartFile object) {
+                                                  @RequestParam("object") List<MultipartFile> files) {
         String userRootFolder = pathHelper.getUserRootFolder(securityUser.getUserId());
-        fileService.upload(userRootFolder + path, object);
-        String newPath = userRootFolder + path + object.getOriginalFilename();
-        ResourceInfoDto resourceInfoDto = resourceServiceFactory.getService(newPath).getInfo(newPath);
+        List<ResourceInfoDto> resourceInfoDtos = new ArrayList<>();
+
+        for (MultipartFile file : files) {
+            fileService.upload(userRootFolder + path, file);
+            String newPath = userRootFolder + path + file.getOriginalFilename();
+            ResourceInfoDto resourceInfoDto = resourceServiceFactory.getService(newPath).getInfo(newPath);
+            resourceInfoDtos.add(resourceInfoDto);
+        }
+
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(resourceInfoDto);
+                .body(resourceInfoDtos);
     }
 }
