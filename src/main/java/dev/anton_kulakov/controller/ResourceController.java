@@ -38,10 +38,8 @@ public class ResourceController {
     }
 
     @DeleteMapping("/api/resource")
-    public ResponseEntity<Void> delete(@AuthenticationPrincipal SecurityUser securityUser,
-                                       @RequestParam String path) {
-        String userRootFolder = pathHelper.getUserRootFolder(securityUser.getUserId());
-        resourceServiceFactory.getService(path).delete(userRootFolder + path);
+    public ResponseEntity<Void> delete(@RequestParam String path) {
+        resourceServiceFactory.getService(path).delete(path);
         return ResponseEntity.noContent().build();
     }
 

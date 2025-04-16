@@ -22,7 +22,6 @@ public class FolderController {
     @GetMapping
     public ResponseEntity<ArrayList<ResourceInfoDto>> getFolderContent(@AuthenticationPrincipal SecurityUser securityUser,
                                                                        @RequestParam String path) {
-
         String userRootFolder = pathHelper.getUserRootFolder(securityUser.getUserId());
         ArrayList<ResourceInfoDto> resources = folderService.getContent(userRootFolder + path);
         return ResponseEntity.ok(resources);

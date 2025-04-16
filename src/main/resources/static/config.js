@@ -85,7 +85,7 @@ window.APP_CONFIG = {
                 lastModified: null,
                 name: obj.name,
                 size: obj.size,
-                path: obj.path + obj.name, //путь в полном формате необходим для корректной навигации
+                path: obj.type === "DIRECTORY" ? obj.path : obj.path + obj.name,
                 folder: obj.type === "DIRECTORY" // фронт использует простой boolean. Если папка имеет другое название - смените
             }
         },
