@@ -73,6 +73,8 @@ public class FileService implements ResourceServiceInterface {
 
             throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
         }
+
+        delete(from);
     }
 
     public List<ResourceInfoDto> search(String query) {
