@@ -4,6 +4,7 @@ import dev.anton_kulakov.dto.ResourceInfoDto;
 import dev.anton_kulakov.dto.StreamingResponseFactory;
 import dev.anton_kulakov.model.SecurityUser;
 import dev.anton_kulakov.service.FileService;
+import dev.anton_kulakov.service.MinioHelper;
 import dev.anton_kulakov.service.PathHelper;
 import dev.anton_kulakov.service.ResourceServiceFactory;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class ResourceController {
     private final StreamingResponseFactory streamingResponseFactory;
     private final FileService fileService;
     private final PathHelper pathHelper;
+    private final MinioHelper minioHelper;
 
     @GetMapping("/api/resource")
     public ResponseEntity<ResourceInfoDto> getInfo(@RequestParam String path) {
@@ -52,15 +54,17 @@ public class ResourceController {
     }
 
     @GetMapping("/api/resource/search")
-    public ResponseEntity<List<ResourceInfoDto>> search(@RequestParam String query) {
-        List<ResourceInfoDto> resources = fileService.search(query);
+    public ResponseEntity<List<ResourceInfoDto>> search(@AuthenticationPrincipal SecurityUser securityUser,
+                                                        @RequestParam String query) {
+        String userRootFolder = pathHelper.getUserRootFolder(securityUser.getUserId());
+        List<ResourceInfoDto> resources = minioHelper.search(userRootFolder, query.toLowerCase());
         return ResponseEntity.ok().body(resources);
     }
 
     @PostMapping("/api/resource")
     public ResponseEntity<List<ResourceInfoDto>> upload(@AuthenticationPrincipal SecurityUser securityUser,
-                                                  @RequestParam String path,
-                                                  @RequestParam("object") List<MultipartFile> files) {
+                                                        @RequestParam String path,
+                                                        @RequestParam("object") List<MultipartFile> files) {
         String userRootFolder = pathHelper.getUserRootFolder(securityUser.getUserId());
         List<ResourceInfoDto> resourceInfoDtos = new ArrayList<>();
 

@@ -118,9 +118,9 @@ public class FolderService implements ResourceServiceInterface {
         }
     }
 
-    public ArrayList<ResourceInfoDto> getContent(String path) {
+    public List<ResourceInfoDto> getContent(String path) {
         Iterable<Result<Item>> allResources = getAllResourcesFromUserFolder(path);
-        ArrayList<ResourceInfoDto> resourcesFound = new ArrayList<>();
+        List<ResourceInfoDto> resourcesFound = new ArrayList<>();
 
         for (Result<Item> resource : allResources) {
             try {
