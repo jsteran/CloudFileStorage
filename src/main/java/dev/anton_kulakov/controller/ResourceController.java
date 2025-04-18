@@ -70,10 +70,7 @@ public class ResourceController {
         List<ResourceInfoDto> resourceInfoDtos = new ArrayList<>();
 
         for (MultipartFile file : files) {
-            ResourceInfoDto fileInfo = fileService.getInfo(userRootFolder + file.getOriginalFilename());
-            String existingFileName = fileInfo.getPath() + file.getOriginalFilename();
-
-            if (existingFileName.equals(userRootFolder + file.getOriginalFilename())) {
+            if (fileService.isExists(userRootFolder + file.getOriginalFilename())) {
                 throw new ResourceAlreadyExistsException("The file with the path %s is already exists".formatted(userRootFolder + file.getOriginalFilename()));
             }
 

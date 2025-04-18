@@ -96,4 +96,17 @@ public class FileService implements ResourceServiceInterface {
             throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
         }
     }
+
+    public boolean isExists(String path) {
+        try {
+            minioClient.statObject(StatObjectArgs.builder()
+                    .bucket(BUCKET_NAME)
+                    .object(path)
+                    .build());
+
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }
