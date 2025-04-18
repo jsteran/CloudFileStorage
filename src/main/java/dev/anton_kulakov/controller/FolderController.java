@@ -1,6 +1,7 @@
 package dev.anton_kulakov.controller;
 
 import dev.anton_kulakov.dto.ResourceInfoDto;
+import dev.anton_kulakov.exception.ResourceAlreadyExistsException;
 import dev.anton_kulakov.model.SecurityUser;
 import dev.anton_kulakov.service.FolderService;
 import dev.anton_kulakov.service.PathHelper;
@@ -31,6 +32,11 @@ public class FolderController {
     public ResponseEntity<ResourceInfoDto> create(@AuthenticationPrincipal SecurityUser securityUser,
                                                   @RequestParam String path) {
         String userRootFolder = pathHelper.getUserRootFolder(securityUser.getUserId());
+
+        if (folderService.isFolderExists(userRootFolder + path)) {
+            throw new ResourceAlreadyExistsException("The folder with the path %s is already exists".formatted(userRootFolder + path));
+        }
+        
         folderService.create(userRootFolder + path);
         ResourceInfoDto resourceInfoDto = folderService.getInfo(userRootFolder + path);
         return ResponseEntity

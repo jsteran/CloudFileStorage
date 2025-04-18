@@ -33,7 +33,7 @@ public class FolderService implements ResourceServiceInterface {
         return minioHelper.convertToFolderDto(folderName);
     }
 
-    private boolean isFolderExists(String folderName) {
+    public boolean isFolderExists(String folderName) {
         return minioClient.listObjects(ListObjectsArgs.builder()
                         .bucket(BUCKET_NAME)
                         .prefix(folderName)
