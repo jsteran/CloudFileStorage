@@ -33,7 +33,7 @@ public class FolderController {
                                                   @RequestParam String path) {
         String userRootFolder = pathHelper.getUserRootFolder(securityUser.getUserId());
 
-        if (folderService.isFolderExists(userRootFolder + path)) {
+        if (folderService.isExists(userRootFolder + path)) {
             throw new ResourceAlreadyExistsException("The folder with the path %s is already exists".formatted(userRootFolder + path));
         }
         

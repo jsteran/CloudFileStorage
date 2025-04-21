@@ -12,4 +12,8 @@ public class ResourceServiceFactory {
     public ResourceServiceInterface getService(String resourcePath) {
         return resourcePath.endsWith("/") ? folderService : fileService;
     }
+
+    public FileService getFileUploadService() {
+        return fileService;
+    }
 }

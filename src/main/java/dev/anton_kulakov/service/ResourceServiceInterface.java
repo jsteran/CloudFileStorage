@@ -8,4 +8,6 @@ public interface ResourceServiceInterface {
     void delete(String resourceName);
 
     void move(String from, String to);
+
+    boolean isExists(String path);
 }

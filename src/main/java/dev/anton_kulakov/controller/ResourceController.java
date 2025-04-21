@@ -4,7 +4,6 @@ import dev.anton_kulakov.dto.ResourceInfoDto;
 import dev.anton_kulakov.dto.StreamingResponseFactory;
 import dev.anton_kulakov.exception.ResourceAlreadyExistsException;
 import dev.anton_kulakov.model.SecurityUser;
-import dev.anton_kulakov.service.FileService;
 import dev.anton_kulakov.service.MinioHelper;
 import dev.anton_kulakov.service.PathHelper;
 import dev.anton_kulakov.service.ResourceServiceFactory;
@@ -24,7 +23,6 @@ import java.util.List;
 public class ResourceController {
     private final ResourceServiceFactory resourceServiceFactory;
     private final StreamingResponseFactory streamingResponseFactory;
-    private final FileService fileService;
     private final PathHelper pathHelper;
     private final MinioHelper minioHelper;
 
@@ -82,11 +80,11 @@ public class ResourceController {
         List<ResourceInfoDto> resourceInfoDtos = new ArrayList<>();
 
         for (MultipartFile file : files) {
-            if (fileService.isExists(userRootFolder + file.getOriginalFilename())) {
+            if (resourceServiceFactory.getService(file.getOriginalFilename()).isExists(userRootFolder + file.getOriginalFilename())) {
                 throw new ResourceAlreadyExistsException("The file with the path %s is already exists".formatted(userRootFolder + file.getOriginalFilename()));
             }
 
-            fileService.upload(userRootFolder + path, file);
+            resourceServiceFactory.getFileUploadService().upload(userRootFolder + path, file);
             String newPath = userRootFolder + path + file.getOriginalFilename();
             ResourceInfoDto resourceInfoDto = resourceServiceFactory.getService(newPath).getInfo(newPath);
             resourceInfoDtos.add(resourceInfoDto);

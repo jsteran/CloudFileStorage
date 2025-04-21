@@ -37,7 +37,6 @@ public class RegistrationController {
         HttpSession session = request.getSession(true);
         session.setAttribute("userId", user.getId());
 
-
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(userResponseDto);

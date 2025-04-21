@@ -25,18 +25,18 @@ public class FolderService implements ResourceServiceInterface {
     private static final String BUCKET_NAME = "user-files";
 
     @Override
-    public ResourceInfoDto getInfo(String folderName) {
-        if (!isFolderExists(folderName)) {
-            throw new ResourceNotFoundException("The folder with the path %s could not be found".formatted(folderName));
+    public ResourceInfoDto getInfo(String path) {
+        if (!isExists(path)) {
+            throw new ResourceNotFoundException("The folder with the path %s could not be found".formatted(path));
         }
 
-        return minioHelper.convertToFolderDto(folderName);
+        return minioHelper.convertToFolderDto(path);
     }
 
-    public boolean isFolderExists(String folderName) {
+    public boolean isExists(String path) {
         return minioClient.listObjects(ListObjectsArgs.builder()
                         .bucket(BUCKET_NAME)
-                        .prefix(folderName)
+                        .prefix(path)
                         .maxKeys(1)
                         .recursive(false)
                         .build())
