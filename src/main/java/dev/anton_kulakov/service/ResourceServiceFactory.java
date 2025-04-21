@@ -8,6 +8,7 @@ import org.springframework.stereotype.Component;
 public class ResourceServiceFactory {
     private final FileService fileService;
     private final FolderService folderService;
+    private final ResourceSearchService resourceSearchService;
 
     public ResourceServiceInterface getService(String resourcePath) {
         return resourcePath.endsWith("/") ? folderService : fileService;
@@ -15,5 +16,9 @@ public class ResourceServiceFactory {
 
     public FileService getFileUploadService() {
         return fileService;
+    }
+
+    public ResourceSearchService getSearchService() {
+        return resourceSearchService;
     }
 }
