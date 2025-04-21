@@ -48,7 +48,19 @@ public class ResourceController {
     }
 
     @GetMapping("/api/resource/move")
-    public ResponseEntity<ResourceInfoDto> move(@RequestParam String from, @RequestParam String to) {
+    public ResponseEntity<ResourceInfoDto> move(@AuthenticationPrincipal SecurityUser securityUser,
+                                                @RequestParam String from,
+                                                @RequestParam String to) {
+        String userRootFolder = pathHelper.getUserRootFolder(securityUser.getUserId());
+
+        if (!from.contains(userRootFolder)) {
+            from = userRootFolder + from;
+        }
+
+        if (!to.contains(userRootFolder)) {
+            to = userRootFolder + to;
+        }
+
         resourceServiceFactory.getService(from).move(from, to);
         ResourceInfoDto resourceInfoDto = resourceServiceFactory.getService(to).getInfo(to);
         return ResponseEntity.ok().body(resourceInfoDto);
