@@ -1,4 +1,4 @@
-package dev.anton_kulakov.config;
+package dev.anton_kulakov.config.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.anton_kulakov.filter.JsonAuthenticationFilter;
@@ -22,6 +22,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -47,7 +48,17 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                         .sessionFixation().changeSessionId()
                         .maximumSessions(1))
+                .logout(logout -> logout
+                        .logoutUrl("/api/auth/sign-out")
+                        .logoutSuccessHandler(customLogoutSuccessHandler())
+                        .invalidateHttpSession(true)
+                        .deleteCookies("SESSION"))
                 .build();
+    }
+
+    @Bean
+    public LogoutSuccessHandler customLogoutSuccessHandler() {
+        return new CustomLogoutSuccessHandler();
     }
 
     @Bean
