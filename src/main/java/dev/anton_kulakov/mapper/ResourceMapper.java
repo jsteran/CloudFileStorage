@@ -1,7 +1,7 @@
 package dev.anton_kulakov.mapper;
 
 import dev.anton_kulakov.dto.ResourceInfoDto;
-import dev.anton_kulakov.dto.ResourceTypeEnum;
+import dev.anton_kulakov.model.ResourceTypeEnum;
 import dev.anton_kulakov.service.PathHelper;
 import io.minio.StatObjectResponse;
 import io.minio.messages.Item;

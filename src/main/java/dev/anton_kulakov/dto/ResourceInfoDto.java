@@ -1,6 +1,7 @@
 package dev.anton_kulakov.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import dev.anton_kulakov.model.ResourceTypeEnum;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

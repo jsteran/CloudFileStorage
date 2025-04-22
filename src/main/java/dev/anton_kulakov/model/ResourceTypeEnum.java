@@ -1,4 +1,4 @@
-package dev.anton_kulakov.dto;
+package dev.anton_kulakov.model;
 
 import lombok.Getter;
 
