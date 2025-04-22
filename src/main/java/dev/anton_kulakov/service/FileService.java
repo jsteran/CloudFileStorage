@@ -1,6 +1,7 @@
 package dev.anton_kulakov.service;
 
 import dev.anton_kulakov.dto.ResourceInfoDto;
+import dev.anton_kulakov.dto.ResourceMapper;
 import dev.anton_kulakov.exception.MinioException;
 import io.minio.*;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +15,7 @@ import java.util.function.Consumer;
 @RequiredArgsConstructor
 public class FileService implements ResourceServiceInterface {
     private final MinioClient minioClient;
-    private final MinioHelper minioHelper;
+    private final ResourceMapper resourceMapper;
     private static final String BUCKET_NAME = "user-files";
 
 
@@ -31,7 +32,7 @@ public class FileService implements ResourceServiceInterface {
             throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
         }
 
-        return minioHelper.convertToFileDto(statObjectResponse);
+        return resourceMapper.toFileInfoDto(statObjectResponse);
     }
 
     @Override

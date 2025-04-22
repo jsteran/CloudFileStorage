@@ -1,6 +1,7 @@
 package dev.anton_kulakov.service;
 
 import dev.anton_kulakov.dto.ResourceInfoDto;
+import dev.anton_kulakov.dto.ResourceMapper;
 import dev.anton_kulakov.exception.MinioException;
 import dev.anton_kulakov.exception.ResourceNotFoundException;
 import io.minio.*;
@@ -20,7 +21,7 @@ import java.util.stream.Collectors;
 public class FolderService implements ResourceServiceInterface {
     private final FileService fileService;
     private final MinioClient minioClient;
-    private final MinioHelper minioHelper;
+    private final ResourceMapper resourceMapper;
     private final PathHelper pathHelper;
     private static final String BUCKET_NAME = "user-files";
 
@@ -30,7 +31,7 @@ public class FolderService implements ResourceServiceInterface {
             throw new ResourceNotFoundException("The folder with the path %s could not be found".formatted(path));
         }
 
-        return minioHelper.convertToFolderDto(path);
+        return resourceMapper.toFolderInfoDto(path);
     }
 
     public boolean isExists(String path) {
@@ -128,10 +129,10 @@ public class FolderService implements ResourceServiceInterface {
                 ResourceInfoDto resourceInfoDto;
 
                 if (resourceName.endsWith("/") && resource.get().isDir()) {
-                    resourceInfoDto = minioHelper.convertToFolderDto(resource.get().objectName());
+                    resourceInfoDto = resourceMapper.toFolderInfoDto(resource.get().objectName());
                     resourcesFound.add(resourceInfoDto);
                 } else if (!resourceName.endsWith("/")) {
-                    resourceInfoDto = minioHelper.convertToFileDto(resource.get());
+                    resourceInfoDto = resourceMapper.toFileInfoDto(resource.get());
                     resourcesFound.add(resourceInfoDto);
                 }
 

@@ -1,6 +1,7 @@
 package dev.anton_kulakov.service;
 
 import dev.anton_kulakov.dto.ResourceInfoDto;
+import dev.anton_kulakov.dto.ResourceMapper;
 import dev.anton_kulakov.exception.MinioException;
 import io.minio.ListObjectsArgs;
 import io.minio.MinioClient;
@@ -17,7 +18,7 @@ import java.util.List;
 public class ResourceSearchService {
     private final PathHelper pathHelper;
     private final MinioClient minioClient;
-    private final MinioHelper minioHelper;
+    private final ResourceMapper resourceMapper;
     private static final String BUCKET_NAME = "user-files";
 
     public List<ResourceInfoDto> search(String userRootFolder, String query) {
@@ -36,7 +37,7 @@ public class ResourceSearchService {
                     ResourceInfoDto resourceInfoDto;
 
                     if (resourceName.endsWith("/") && resource.get().isDir()) {
-                        resourceInfoDto = minioHelper.convertToFolderDto(resource.get().objectName());
+                        resourceInfoDto = resourceMapper.toFolderInfoDto(resource.get().objectName());
                         foldersToSearch.add(resource.get().objectName());
 
                         if (pathHelper.getLastFolderName(resource.get().objectName()).toLowerCase().contains(query)) {
@@ -44,7 +45,7 @@ public class ResourceSearchService {
                         }
 
                     } else if (!resourceName.endsWith("/")) {
-                        resourceInfoDto = minioHelper.convertToFileDto(resource.get());
+                        resourceInfoDto = resourceMapper.toFileInfoDto(resource.get());
 
                         if (pathHelper.getFileName(resource.get().objectName()).toLowerCase().contains(query)) {
                             resourcesFound.add(resourceInfoDto);
