@@ -3,7 +3,6 @@ package dev.anton_kulakov.streaming;
 import dev.anton_kulakov.exception.ResourceNotFoundException;
 import dev.anton_kulakov.service.FileService;
 import dev.anton_kulakov.service.FolderService;
-import dev.anton_kulakov.service.IOHelper;
 import dev.anton_kulakov.service.PathHelper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
@@ -18,7 +17,7 @@ public class StreamingResponseFactory {
     private final FileService fileService;
     private final FolderService folderService;
     private final PathHelper pathHelper;
-    private final IOHelper ioHelper;
+    private final StreamCopier streamCopier;
 
     public StreamingResponseBody createResponse(String path) {
         if (path.endsWith("/")) {
@@ -28,10 +27,10 @@ public class StreamingResponseFactory {
                 throw new ResourceNotFoundException("Folder is empty");
             }
 
-            return new FolderStreamingResponseBody(fileService, pathHelper, ioHelper, resourcesInFolder, path);
+            return new FolderStreamingResponseBody(fileService, pathHelper, streamCopier, resourcesInFolder, path);
         }
 
-        return new FileStreamingResponseBody(fileService, ioHelper, path);
+        return new FileStreamingResponseBody(fileService, streamCopier, path);
     }
 
     public MediaType getContentType(String path) {
