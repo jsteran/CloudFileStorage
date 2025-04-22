@@ -1,7 +1,7 @@
 package dev.anton_kulakov.controller;
 
 import dev.anton_kulakov.dto.ResourceInfoDto;
-import dev.anton_kulakov.dto.StreamingResponseFactory;
+import dev.anton_kulakov.streaming.StreamingResponseFactory;
 import dev.anton_kulakov.exception.ResourceAlreadyExistsException;
 import dev.anton_kulakov.model.SecurityUser;
 import dev.anton_kulakov.service.PathHelper;

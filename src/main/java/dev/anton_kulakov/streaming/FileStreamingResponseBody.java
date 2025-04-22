@@ -1,4 +1,4 @@
-package dev.anton_kulakov.dto;
+package dev.anton_kulakov.streaming;
 
 import dev.anton_kulakov.service.FileService;
 import dev.anton_kulakov.service.IOHelper;
