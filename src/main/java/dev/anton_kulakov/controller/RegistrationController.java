@@ -1,6 +1,6 @@
 package dev.anton_kulakov.controller;
 
-import dev.anton_kulakov.dto.UserMapper;
+import dev.anton_kulakov.mapper.UserMapper;
 import dev.anton_kulakov.dto.UserRequestDto;
 import dev.anton_kulakov.dto.UserResponseDto;
 import dev.anton_kulakov.model.User;

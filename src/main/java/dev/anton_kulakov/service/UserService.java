@@ -1,7 +1,7 @@
 package dev.anton_kulakov.service;
 
 import dev.anton_kulakov.dto.UserRequestDto;
-import dev.anton_kulakov.dto.UserMapper;
+import dev.anton_kulakov.mapper.UserMapper;
 import dev.anton_kulakov.exception.UsernameAlreadyTakenException;
 import dev.anton_kulakov.model.User;
 import dev.anton_kulakov.repository.UserRepository;

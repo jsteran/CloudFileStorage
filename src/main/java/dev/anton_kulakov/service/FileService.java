@@ -1,7 +1,7 @@
 package dev.anton_kulakov.service;
 
 import dev.anton_kulakov.dto.ResourceInfoDto;
-import dev.anton_kulakov.dto.ResourceMapper;
+import dev.anton_kulakov.mapper.ResourceMapper;
 import dev.anton_kulakov.exception.MinioException;
 import io.minio.*;
 import lombok.RequiredArgsConstructor;
