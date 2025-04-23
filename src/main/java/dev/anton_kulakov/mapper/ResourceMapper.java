@@ -2,7 +2,7 @@ package dev.anton_kulakov.mapper;
 
 import dev.anton_kulakov.dto.ResourceInfoDto;
 import dev.anton_kulakov.model.ResourceTypeEnum;
-import dev.anton_kulakov.service.PathHelper;
+import dev.anton_kulakov.util.PathProcessor;
 import io.minio.StatObjectResponse;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class ResourceMapper {
-    private final PathHelper pathHelper;
+    private final PathProcessor pathProcessor;
 
     public ResourceInfoDto toFileInfoDto(StatObjectResponse statObjectResponse) {
         return createFileInfoDto(statObjectResponse.object(), statObjectResponse.size());
@@ -24,7 +24,7 @@ public class ResourceMapper {
     public ResourceInfoDto toFolderInfoDto(String folderPath) {
         ResourceInfoDto resourceInfoDto = new ResourceInfoDto();
         resourceInfoDto.setPath(folderPath);
-        resourceInfoDto.setName(pathHelper.getLastFolderName(folderPath));
+        resourceInfoDto.setName(pathProcessor.getLastFolderName(folderPath));
         resourceInfoDto.setType(ResourceTypeEnum.DIRECTORY);
 
         return resourceInfoDto;
@@ -32,8 +32,8 @@ public class ResourceMapper {
 
     private ResourceInfoDto createFileInfoDto(String objectName, long size) {
         ResourceInfoDto resourceInfoDto = new ResourceInfoDto();
-        String fileName = pathHelper.getFileName(objectName);
-        String folderPath = pathHelper.getFolderPath(objectName, fileName);
+        String fileName = pathProcessor.getFileName(objectName);
+        String folderPath = pathProcessor.getFolderPath(objectName, fileName);
 
         resourceInfoDto.setPath(folderPath);
         resourceInfoDto.setName(fileName);

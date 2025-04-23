@@ -4,6 +4,7 @@ import dev.anton_kulakov.dto.ResourceInfoDto;
 import dev.anton_kulakov.mapper.ResourceMapper;
 import dev.anton_kulakov.exception.MinioException;
 import dev.anton_kulakov.exception.ResourceNotFoundException;
+import dev.anton_kulakov.util.PathProcessor;
 import io.minio.*;
 import io.minio.messages.DeleteError;
 import io.minio.messages.DeleteObject;
@@ -22,7 +23,7 @@ public class FolderService implements ResourceServiceInterface {
     private final FileService fileService;
     private final MinioClient minioClient;
     private final ResourceMapper resourceMapper;
-    private final PathHelper pathHelper;
+    private final PathProcessor pathProcessor;
     private static final String BUCKET_NAME = "user-files";
 
     @Override
@@ -74,7 +75,7 @@ public class FolderService implements ResourceServiceInterface {
         List<String> resourcesNamesInFolder = getResourcesNamesInFolder(from);
 
         for (String resource : resourcesNamesInFolder) {
-            String relativePath = pathHelper.getRelativePath(from, resource);
+            String relativePath = pathProcessor.getRelativePath(from, resource);
 
             try {
                 minioClient.copyObject(CopyObjectArgs.builder()

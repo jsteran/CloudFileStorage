@@ -1,12 +1,12 @@
 package dev.anton_kulakov.controller;
 
-import dev.anton_kulakov.mapper.UserMapper;
 import dev.anton_kulakov.dto.UserRequestDto;
 import dev.anton_kulakov.dto.UserResponseDto;
+import dev.anton_kulakov.mapper.UserMapper;
 import dev.anton_kulakov.model.User;
 import dev.anton_kulakov.service.FolderService;
-import dev.anton_kulakov.service.PathHelper;
 import dev.anton_kulakov.service.UserService;
+import dev.anton_kulakov.util.PathProcessor;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
@@ -25,14 +25,14 @@ public class RegistrationController {
     private final UserService userService;
     private final UserMapper userMapper;
     private final FolderService folderService;
-    private final PathHelper pathHelper;
+    private final PathProcessor pathProcessor;
 
     @PostMapping
     public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody UserRequestDto userRequestDto,
                                                       HttpServletRequest request) {
         User user = userService.createUser(userRequestDto);
         UserResponseDto userResponseDto = userMapper.toResponseDto(user);
-        String userRootFolder = pathHelper.getUserRootFolder(user.getId());
+        String userRootFolder = pathProcessor.getUserRootFolder(user.getId());
         folderService.create(userRootFolder);
         HttpSession session = request.getSession(true);
         session.setAttribute("userId", user.getId());

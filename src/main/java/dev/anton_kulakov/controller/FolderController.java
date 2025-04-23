@@ -4,7 +4,7 @@ import dev.anton_kulakov.dto.ResourceInfoDto;
 import dev.anton_kulakov.exception.ResourceAlreadyExistsException;
 import dev.anton_kulakov.model.SecurityUser;
 import dev.anton_kulakov.service.FolderService;
-import dev.anton_kulakov.service.PathHelper;
+import dev.anton_kulakov.util.PathProcessor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,12 +18,12 @@ import java.util.List;
 @RequestMapping("/api/directory")
 public class FolderController {
     private final FolderService folderService;
-    private final PathHelper pathHelper;
+    private final PathProcessor pathProcessor;
 
     @GetMapping
     public ResponseEntity<List<ResourceInfoDto>> getFolderContent(@AuthenticationPrincipal SecurityUser securityUser,
                                                                   @RequestParam String path) {
-        String userRootFolder = pathHelper.getUserRootFolder(securityUser.getUserId());
+        String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
         List<ResourceInfoDto> resources = folderService.getContent(userRootFolder + path);
         return ResponseEntity.ok(resources);
     }
@@ -31,7 +31,7 @@ public class FolderController {
     @PostMapping
     public ResponseEntity<ResourceInfoDto> create(@AuthenticationPrincipal SecurityUser securityUser,
                                                   @RequestParam String path) {
-        String userRootFolder = pathHelper.getUserRootFolder(securityUser.getUserId());
+        String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
 
         if (folderService.isExists(userRootFolder + path)) {
             throw new ResourceAlreadyExistsException("The folder with the path %s is already exists".formatted(userRootFolder + path));

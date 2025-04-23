@@ -2,7 +2,7 @@ package dev.anton_kulakov.streaming;
 
 import dev.anton_kulakov.exception.MinioException;
 import dev.anton_kulakov.service.FileService;
-import dev.anton_kulakov.service.PathHelper;
+import dev.anton_kulakov.util.PathProcessor;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
@@ -16,7 +16,7 @@ import java.util.zip.ZipOutputStream;
 @RequiredArgsConstructor
 public class FolderStreamingResponseBody implements StreamingResponseBody {
     private final FileService fileService;
-    private final PathHelper pathHelper;
+    private final PathProcessor pathProcessor;
     private final StreamCopier streamCopier;
     private final List<String> resourcesInFolder;
     private final String pathWithoutResourceName;
@@ -34,7 +34,7 @@ public class FolderStreamingResponseBody implements StreamingResponseBody {
     }
 
     private void addResourceToZip(ZipOutputStream zipOut, String fullResourceName) throws IOException {
-        String entryName = pathHelper.getRelativePath(pathWithoutResourceName, fullResourceName);
+        String entryName = pathProcessor.getRelativePath(pathWithoutResourceName, fullResourceName);
         int bufferSize = 1024;
 
         try {

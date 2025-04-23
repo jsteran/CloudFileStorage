@@ -4,7 +4,7 @@ import dev.anton_kulakov.dto.ResourceInfoDto;
 import dev.anton_kulakov.streaming.StreamingResponseFactory;
 import dev.anton_kulakov.exception.ResourceAlreadyExistsException;
 import dev.anton_kulakov.model.SecurityUser;
-import dev.anton_kulakov.service.PathHelper;
+import dev.anton_kulakov.util.PathProcessor;
 import dev.anton_kulakov.service.ResourceServiceFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,7 +22,7 @@ import java.util.List;
 public class ResourceController {
     private final ResourceServiceFactory resourceServiceFactory;
     private final StreamingResponseFactory streamingResponseFactory;
-    private final PathHelper pathHelper;
+    private final PathProcessor pathProcessor;
 
     @GetMapping("/api/resource")
     public ResponseEntity<ResourceInfoDto> getInfo(@RequestParam String path) {
@@ -47,7 +47,7 @@ public class ResourceController {
     public ResponseEntity<ResourceInfoDto> move(@AuthenticationPrincipal SecurityUser securityUser,
                                                 @RequestParam String from,
                                                 @RequestParam String to) {
-        String userRootFolder = pathHelper.getUserRootFolder(securityUser.getUserId());
+        String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
 
         if (!from.contains(userRootFolder)) {
             from = userRootFolder + from;
@@ -65,7 +65,7 @@ public class ResourceController {
     @GetMapping("/api/resource/search")
     public ResponseEntity<List<ResourceInfoDto>> search(@AuthenticationPrincipal SecurityUser securityUser,
                                                         @RequestParam String query) {
-        String userRootFolder = pathHelper.getUserRootFolder(securityUser.getUserId());
+        String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
         List<ResourceInfoDto> resources = resourceServiceFactory.getSearchService().search(userRootFolder, query.toLowerCase());
         return ResponseEntity.ok().body(resources);
     }
@@ -74,7 +74,7 @@ public class ResourceController {
     public ResponseEntity<List<ResourceInfoDto>> upload(@AuthenticationPrincipal SecurityUser securityUser,
                                                         @RequestParam String path,
                                                         @RequestParam("object") List<MultipartFile> files) {
-        String userRootFolder = pathHelper.getUserRootFolder(securityUser.getUserId());
+        String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
         List<ResourceInfoDto> resourceInfoDtos = new ArrayList<>();
 
         for (MultipartFile file : files) {

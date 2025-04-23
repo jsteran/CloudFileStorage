@@ -1,4 +1,4 @@
-package dev.anton_kulakov.service;
+package dev.anton_kulakov.util;
 
 import org.springframework.stereotype.Component;
 
@@ -6,7 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @Component
-public class PathHelper {
+public class PathProcessor {
     public String getLastFolderName(String resourcePath) {
         if (resourcePath == null || resourcePath.isBlank()) {
             return "";
