@@ -53,19 +53,11 @@ public class ResourceController {
                                                 @RequestParam String from,
                                                 @RequestParam String to) {
         String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
-
-        if (!from.contains(userRootFolder)) {
-            from = userRootFolder + from;
-        }
-
-        if (!to.contains(userRootFolder)) {
-            to = userRootFolder + to;
-        }
-
-        ResourceHandlerInterface resourceHandler = resourceHandlerFactory.getResourceHandler(from);
-        resourceHandler.move(from, to);
-        ResourceInfoDto resourceInfoDto = resourceHandler.getInfo(to);
-
+        String fromPath = pathProcessor.getPathWithUserRootFolder(from, userRootFolder);
+        String toPath = pathProcessor.getPathWithUserRootFolder(to, userRootFolder);
+        ResourceHandlerInterface resourceHandler = resourceHandlerFactory.getResourceHandler(fromPath);
+        resourceHandler.move(fromPath, toPath);
+        ResourceInfoDto resourceInfoDto = resourceHandler.getInfo(toPath);
         return ResponseEntity.ok().body(resourceInfoDto);
     }
 

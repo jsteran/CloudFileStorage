@@ -7,12 +7,12 @@ import java.util.List;
 
 @Component
 public class PathProcessor {
-    public String getLastFolderName(String resourcePath) {
-        if (resourcePath == null || resourcePath.isBlank()) {
+    public String getLastFolderName(String path) {
+        if (path == null || path.isBlank()) {
             return "";
         }
 
-        List<String> clearedOfEmptyPartsName = Arrays.stream(resourcePath.split("/"))
+        List<String> clearedOfEmptyPartsName = Arrays.stream(path.split("/"))
                 .filter(s -> !s.isBlank())
                 .toList();
 
@@ -54,5 +54,13 @@ public class PathProcessor {
 
     public String getUserRootFolder(int userId) {
         return "user-" + userId + "-files/";
+    }
+
+    public String getPathWithUserRootFolder(String path, String userRootFolder) {
+        if (!path.contains(userRootFolder)) {
+            path = userRootFolder + path;
+        }
+
+        return path;
     }
 }
