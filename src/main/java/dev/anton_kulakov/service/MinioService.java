@@ -2,6 +2,7 @@ package dev.anton_kulakov.service;
 
 import dev.anton_kulakov.exception.MinioException;
 import io.minio.*;
+import io.minio.errors.ErrorResponseException;
 import io.minio.messages.DeleteError;
 import io.minio.messages.DeleteObject;
 import io.minio.messages.Item;
@@ -121,10 +122,20 @@ public class MinioService {
 
     public boolean isFileExists(String path) {
         try {
-            getStatObject(path);
+            minioClient.statObject(StatObjectArgs.builder()
+                    .bucket(BUCKET_NAME)
+                    .object(path)
+                    .build());
             return true;
+        } catch (ErrorResponseException e) {
+            if ("NoSuchKey".equals(e.errorResponse().code()) ||
+                "NoSuchObject".equals(e.errorResponse().code())) {
+                return false;
+            }
+
+            throw new MinioException("Error checking file existence");
         } catch (Exception e) {
-            return false;
+            throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
         }
     }
 
