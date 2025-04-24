@@ -4,7 +4,7 @@ import dev.anton_kulakov.dto.UserRequestDto;
 import dev.anton_kulakov.dto.UserResponseDto;
 import dev.anton_kulakov.mapper.UserMapper;
 import dev.anton_kulakov.model.User;
-import dev.anton_kulakov.service.FolderService;
+import dev.anton_kulakov.service.MinioService;
 import dev.anton_kulakov.service.UserService;
 import dev.anton_kulakov.util.PathProcessor;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,7 +25,7 @@ import java.security.Principal;
 public class UserController {
     private final UserService userService;
     private final UserMapper userMapper;
-    private final FolderService folderService;
+    private final MinioService minioService;
     private final PathProcessor pathProcessor;
 
     @GetMapping("/api/user/me")
@@ -39,7 +39,7 @@ public class UserController {
         User user = userService.createUser(userRequestDto);
         UserResponseDto userResponseDto = userMapper.toResponseDto(user);
         String userRootFolder = pathProcessor.getUserRootFolder(user.getId());
-        folderService.create(userRootFolder);
+        minioService.createEmptyFolder(userRootFolder);
         HttpSession session = request.getSession(true);
         session.setAttribute("userId", user.getId());
 

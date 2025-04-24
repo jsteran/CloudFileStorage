@@ -1,11 +1,13 @@
 package dev.anton_kulakov.controller;
 
 import dev.anton_kulakov.dto.ResourceInfoDto;
-import dev.anton_kulakov.streaming.StreamingResponseFactory;
 import dev.anton_kulakov.exception.ResourceAlreadyExistsException;
 import dev.anton_kulakov.model.SecurityUser;
+import dev.anton_kulakov.service.ResourceSearchService;
+import dev.anton_kulakov.service.handler.ResourceHandlerFactory;
+import dev.anton_kulakov.service.handler.ResourceHandlerInterface;
+import dev.anton_kulakov.streaming.StreamingResponseFactory;
 import dev.anton_kulakov.util.PathProcessor;
-import dev.anton_kulakov.service.ResourceServiceFactory;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,13 +22,15 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 public class ResourceController {
-    private final ResourceServiceFactory resourceServiceFactory;
+    public final ResourceHandlerFactory resourceHandlerFactory;
+    private final ResourceSearchService resourceSearchService;
     private final StreamingResponseFactory streamingResponseFactory;
     private final PathProcessor pathProcessor;
 
     @GetMapping("/api/resource")
     public ResponseEntity<ResourceInfoDto> getInfo(@RequestParam String path) {
-        ResourceInfoDto resourceInfoDto = resourceServiceFactory.getService(path).getInfo(path);
+        ResourceHandlerInterface resourceHandler = resourceHandlerFactory.getResourceHandler(path);
+        ResourceInfoDto resourceInfoDto = resourceHandler.getInfo(path);
         return ResponseEntity.ok().body(resourceInfoDto);
     }
 
@@ -39,7 +43,8 @@ public class ResourceController {
 
     @DeleteMapping("/api/resource")
     public ResponseEntity<Void> delete(@RequestParam String path) {
-        resourceServiceFactory.getService(path).delete(path);
+        ResourceHandlerInterface resourceHandler = resourceHandlerFactory.getResourceHandler(path);
+        resourceHandler.delete(path);
         return ResponseEntity.noContent().build();
     }
 
@@ -57,8 +62,10 @@ public class ResourceController {
             to = userRootFolder + to;
         }
 
-        resourceServiceFactory.getService(from).move(from, to);
-        ResourceInfoDto resourceInfoDto = resourceServiceFactory.getService(to).getInfo(to);
+        ResourceHandlerInterface resourceHandler = resourceHandlerFactory.getResourceHandler(from);
+        resourceHandler.move(from, to);
+        ResourceInfoDto resourceInfoDto = resourceHandler.getInfo(to);
+
         return ResponseEntity.ok().body(resourceInfoDto);
     }
 
@@ -66,7 +73,7 @@ public class ResourceController {
     public ResponseEntity<List<ResourceInfoDto>> search(@AuthenticationPrincipal SecurityUser securityUser,
                                                         @RequestParam String query) {
         String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
-        List<ResourceInfoDto> resources = resourceServiceFactory.getSearchService().search(userRootFolder, query.toLowerCase());
+        List<ResourceInfoDto> resources = resourceSearchService.search(userRootFolder, query.toLowerCase());
         return ResponseEntity.ok().body(resources);
     }
 
@@ -78,13 +85,14 @@ public class ResourceController {
         List<ResourceInfoDto> resourceInfoDtos = new ArrayList<>();
 
         for (MultipartFile file : files) {
-            if (resourceServiceFactory.getService(file.getOriginalFilename()).isExists(userRootFolder + file.getOriginalFilename())) {
-                throw new ResourceAlreadyExistsException("The file with the path %s is already exists".formatted(userRootFolder + file.getOriginalFilename()));
+            String fullPath = userRootFolder + file.getOriginalFilename();
+            ResourceHandlerInterface resourceHandler = resourceHandlerFactory.getResourceHandler(fullPath);
+
+            if (resourceHandler.isExists(fullPath)) {
+                throw new ResourceAlreadyExistsException("The file with the path %s is already exists".formatted(fullPath));
             }
 
-            resourceServiceFactory.getFileUploadService().upload(userRootFolder + path, file);
-            String newPath = userRootFolder + path + file.getOriginalFilename();
-            ResourceInfoDto resourceInfoDto = resourceServiceFactory.getService(newPath).getInfo(newPath);
+            ResourceInfoDto resourceInfoDto = resourceHandler.upload(userRootFolder + path, file);
             resourceInfoDtos.add(resourceInfoDto);
         }
 

@@ -4,6 +4,7 @@ import dev.anton_kulakov.dto.ResourceInfoDto;
 import dev.anton_kulakov.exception.ResourceAlreadyExistsException;
 import dev.anton_kulakov.model.SecurityUser;
 import dev.anton_kulakov.service.FolderService;
+import dev.anton_kulakov.service.MinioService;
 import dev.anton_kulakov.util.PathProcessor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,6 +19,7 @@ import java.util.List;
 @RequestMapping("/api/directory")
 public class FolderController {
     private final FolderService folderService;
+    private final MinioService minioService;
     private final PathProcessor pathProcessor;
 
     @GetMapping
@@ -33,11 +35,11 @@ public class FolderController {
                                                   @RequestParam String path) {
         String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
 
-        if (folderService.isExists(userRootFolder + path)) {
+        if (minioService.isFolderExists(userRootFolder + path)) {
             throw new ResourceAlreadyExistsException("The folder with the path %s is already exists".formatted(userRootFolder + path));
         }
-        
-        folderService.create(userRootFolder + path);
+
+        minioService.createEmptyFolder(userRootFolder + path);
         ResourceInfoDto resourceInfoDto = folderService.getInfo(userRootFolder + path);
         return ResponseEntity
                 .status(HttpStatus.CREATED)

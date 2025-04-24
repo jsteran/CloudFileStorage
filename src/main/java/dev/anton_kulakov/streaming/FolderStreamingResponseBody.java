@@ -1,7 +1,7 @@
 package dev.anton_kulakov.streaming;
 
 import dev.anton_kulakov.exception.MinioException;
-import dev.anton_kulakov.service.FileService;
+import dev.anton_kulakov.service.MinioService;
 import dev.anton_kulakov.util.PathProcessor;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +15,7 @@ import java.util.zip.ZipOutputStream;
 
 @RequiredArgsConstructor
 public class FolderStreamingResponseBody implements StreamingResponseBody {
-    private final FileService fileService;
+    private final MinioService minioService;
     private final PathProcessor pathProcessor;
     private final StreamCopier streamCopier;
     private final List<String> resourcesInFolder;
@@ -39,7 +39,7 @@ public class FolderStreamingResponseBody implements StreamingResponseBody {
 
         try {
             zipOut.putNextEntry(new ZipEntry(entryName));
-            fileService.streamFile(fullResourceName, inputStream -> streamCopier.copyStream(inputStream, zipOut, bufferSize));
+            minioService.streamFile(fullResourceName, inputStream -> streamCopier.copyStream(inputStream, zipOut, bufferSize));
         } catch (IOException e) {
             throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
         }
