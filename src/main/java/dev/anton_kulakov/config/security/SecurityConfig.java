@@ -3,6 +3,7 @@ package dev.anton_kulakov.config.security;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.anton_kulakov.filter.JsonAuthenticationFilter;
 import dev.anton_kulakov.service.UserDetailsServiceImpl;
+import dev.anton_kulakov.util.SecurityContextUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ import java.util.Map;
 public class SecurityConfig {
     private final UserDetailsServiceImpl userDetailsServiceImpl;
     private final ObjectMapper objectMapper;
+    private final SecurityContextUtil securityContextUtil;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -63,7 +65,7 @@ public class SecurityConfig {
 
     @Bean
     public JsonAuthenticationFilter jsonAuthenticationFilter() {
-        JsonAuthenticationFilter filter = new JsonAuthenticationFilter(objectMapper);
+        JsonAuthenticationFilter filter = new JsonAuthenticationFilter(objectMapper, securityContextUtil);
         filter.setAuthenticationManager(authenticationManagerBean());
         filter.setFilterProcessesUrl("/api/auth/sign-in");
         filter.setAuthenticationSuccessHandler(this::onAuthenticationSuccess);
