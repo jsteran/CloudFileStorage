@@ -34,10 +34,10 @@ public class ResourceSearchService {
                 if (objectName.endsWith("/") && object.isDir()) {
                     foldersToSearch.add(objectName);
                     resourceInfoDto = resourceMapper.toFolderInfoDto(objectName);
-                    addIfMatchesQuery(query, objectName, resourcesFound, resourceInfoDto);
+                    addIfMatchesQuery(query, objectName, resourcesFound, resourceInfoDto, userRootFolder);
                 } else if (!objectName.endsWith("/")) {
                     resourceInfoDto = resourceMapper.toFileInfoDto(object);
-                    addIfMatchesQuery(query, objectName, resourcesFound, resourceInfoDto);
+                    addIfMatchesQuery(query, objectName, resourcesFound, resourceInfoDto, userRootFolder);
                 }
             }
         }
@@ -45,10 +45,12 @@ public class ResourceSearchService {
         return resourcesFound;
     }
 
-    private void addIfMatchesQuery(String query, String objectName, List<ResourceInfoDto> resourcesFound, ResourceInfoDto resourceInfoDto) {
+    private void addIfMatchesQuery(String query, String objectName, List<ResourceInfoDto> resourcesFound, ResourceInfoDto resourceInfoDto, String userRootFolder) {
         String lowerCaseFolderName = pathProcessor.getLastFolderName(objectName).toLowerCase();
 
         if (lowerCaseFolderName.contains(query)) {
+            String pathWithoutUserRootFolder = resourceInfoDto.getPath().substring(userRootFolder.length());
+            resourceInfoDto.setPath(pathWithoutUserRootFolder);
             resourcesFound.add(resourceInfoDto);
         }
     }
