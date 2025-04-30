@@ -1,6 +1,6 @@
 package dev.anton_kulakov.streaming;
 
-import dev.anton_kulakov.exception.MinioException;
+import dev.anton_kulakov.exception.BaseAppException;
 import dev.anton_kulakov.service.MinioService;
 import dev.anton_kulakov.util.PathProcessor;
 import lombok.RequiredArgsConstructor;
@@ -29,7 +29,7 @@ public class FolderStreamingResponseBody implements StreamingResponseBody {
                 addResourceToZip(zipOut, resource);
             }
         } catch (IOException e) {
-            throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
+            throw new BaseAppException("Failed to create ZIP archive");
         }
     }
 
@@ -41,7 +41,7 @@ public class FolderStreamingResponseBody implements StreamingResponseBody {
             zipOut.putNextEntry(new ZipEntry(entryName));
             minioService.streamFile(fullResourceName, inputStream -> streamCopier.copyStream(inputStream, zipOut, bufferSize));
         } catch (IOException e) {
-            throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
+            throw new BaseAppException("Failed to add resource to ZIP: %s".formatted(fullResourceName));
         }
 
         zipOut.closeEntry();

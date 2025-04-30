@@ -1,6 +1,6 @@
 package dev.anton_kulakov.streaming;
 
-import dev.anton_kulakov.exception.MinioException;
+import dev.anton_kulakov.exception.BaseAppException;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
@@ -19,7 +19,7 @@ public class StreamCopier {
                 outputStream.write(buffer, 0, bytesRead);
             }
         } catch (IOException e) {
-            throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
+            throw new BaseAppException("Failed to copy stream data: I/O error during read/write operation");
         }
     }
 }

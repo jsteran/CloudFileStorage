@@ -2,6 +2,7 @@ package dev.anton_kulakov.controller;
 
 import dev.anton_kulakov.dto.ResourceInfoDto;
 import dev.anton_kulakov.exception.ResourceAlreadyExistsException;
+import dev.anton_kulakov.exception.ResourceNotFoundException;
 import dev.anton_kulakov.model.SecurityUser;
 import dev.anton_kulakov.service.FolderService;
 import dev.anton_kulakov.service.MinioService;
@@ -34,13 +35,20 @@ public class FolderController {
     public ResponseEntity<ResourceInfoDto> create(@AuthenticationPrincipal SecurityUser securityUser,
                                                   @RequestParam String path) {
         String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
+        String fullPath = userRootFolder + path;
+        String newFolderName = pathProcessor.getLastFolderName(fullPath);
+        String parentFolderPath = pathProcessor.getPathWithoutLastFolder(fullPath, newFolderName);
 
-        if (minioService.isFolderExists(userRootFolder + path)) {
-            throw new ResourceAlreadyExistsException("The folder with the path %s is already exists".formatted(userRootFolder + path));
+        if (!minioService.isFolderExists(parentFolderPath)) {
+            throw new ResourceNotFoundException("The parent folder doesn't exists");
         }
 
-        minioService.createEmptyFolder(userRootFolder + path);
-        ResourceInfoDto resourceInfoDto = folderService.getInfo(userRootFolder + path);
+        if (minioService.isFolderExists(fullPath)) {
+            throw new ResourceAlreadyExistsException("The folder with the path %s is already exists".formatted(fullPath));
+        }
+
+        minioService.createEmptyFolder(fullPath);
+        ResourceInfoDto resourceInfoDto = folderService.getInfo(fullPath);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(resourceInfoDto);

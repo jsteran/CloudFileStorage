@@ -36,6 +36,7 @@ public class ResourceController {
 
     @GetMapping("/api/resource/download")
     public ResponseEntity<StreamingResponseBody> download(@RequestParam String path) {
+        resourceHandlerFactory.getResourceHandler(path).getInfo(path);
         return ResponseEntity.ok()
                 .contentType(streamingResponseFactory.getContentType(path))
                 .body(streamingResponseFactory.createResponse(path));

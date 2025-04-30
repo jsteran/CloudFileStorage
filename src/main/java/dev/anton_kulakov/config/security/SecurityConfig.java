@@ -45,6 +45,8 @@ public class SecurityConfig {
                         .requestMatchers("/", "/index.html", "/config.js", "/assets/*").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .anyRequest().authenticated())
+                .exceptionHandling(exceptions -> exceptions
+                        .authenticationEntryPoint(new CustomAuthenticationEntryPoint(objectMapper)))
                 .addFilterAt(jsonAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
@@ -99,9 +101,9 @@ public class SecurityConfig {
     }
 
     private void onAuthenticationFailure(HttpServletRequest req, HttpServletResponse resp, AuthenticationException authenticationException) throws IOException {
-        resp.setStatus(HttpStatus.BAD_REQUEST.value());
+        resp.setStatus(HttpStatus.UNAUTHORIZED.value());
         resp.setContentType("application/json");
-        Map<String, String> response = Map.of("error", "Invalid credentials");
+        Map<String, String> response = Map.of("message", "Invalid credentials");
         objectMapper.writeValue(resp.getWriter(), response);
     }
 }

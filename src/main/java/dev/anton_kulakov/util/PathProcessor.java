@@ -63,4 +63,11 @@ public class PathProcessor {
 
         return path;
     }
+
+    public String getPathWithoutLastFolder(String fullPath, String folderName) {
+        int fullPathLength = fullPath.length();
+        int folderNameLength = folderName.length();
+
+        return fullPath.substring(0, fullPathLength - folderNameLength);
+    }
 }

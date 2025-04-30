@@ -29,7 +29,7 @@ public class MinioService {
                     .object(path)
                     .build());
         } catch (Exception e) {
-            throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
+            throw new MinioException("Failed to retrieve object metadata");
         }
     }
 
@@ -46,7 +46,7 @@ public class MinioService {
             try {
                 results.add(object.get());
             } catch (Exception e) {
-                throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
+                throw new MinioException("Failed to list objects");
             }
         }
 
@@ -60,7 +60,7 @@ public class MinioService {
                     .object(path)
                     .build());
         } catch (Exception e) {
-            throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
+            throw new MinioException("Failed to remove object");
         }
     }
 
@@ -75,7 +75,7 @@ public class MinioService {
                 DeleteError error = result.get();
                 System.err.println("Failed to delete: " + error.objectName() + " - " + error.message());
             } catch (Exception e) {
-                throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
+                throw new MinioException("Failed to process batch deletion result");
             }
         }
     }
@@ -92,7 +92,7 @@ public class MinioService {
                     .build());
         } catch (Exception e) {
             removeObject(to);
-            throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
+            throw new MinioException("Failed to copy object");
         }
     }
 
@@ -103,7 +103,7 @@ public class MinioService {
                 .build())) {
             streamConsumer.accept(inputStream);
         } catch (Exception e) {
-            throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
+            throw new MinioException("Failed to stream file");
         }
     }
 
@@ -116,7 +116,7 @@ public class MinioService {
                     .contentType(file.getContentType())
                     .build());
         } catch (Exception e) {
-            throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
+            throw new MinioException("Failed to upload file");
         }
     }
 
@@ -133,9 +133,9 @@ public class MinioService {
                 return false;
             }
 
-            throw new MinioException("Error checking file existence");
+            throw new MinioException("Error checking existence of file");
         } catch (Exception e) {
-            throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
+            throw new MinioException("Failed to check if file exists");
         }
     }
 
@@ -157,7 +157,7 @@ public class MinioService {
                     .stream(new ByteArrayInputStream(new byte[0]), 0, -1)
                     .build());
         } catch (Exception e) {
-            throw new MinioException("The MinIO service is currently unavailable. Please check the service status and try again later");
+            throw new MinioException("Failed to create empty folder");
         }
     }
 }
