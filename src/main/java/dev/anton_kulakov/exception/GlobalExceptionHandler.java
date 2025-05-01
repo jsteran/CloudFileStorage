@@ -1,9 +1,12 @@
 package dev.anton_kulakov.exception;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.List;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -16,6 +19,26 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ResourceAlreadyExistsException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorMessage handleResourceAlreadyExistsException(ResourceAlreadyExistsException e) {
+        return new ErrorMessage(e.getMessage());
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorMessage handleValidationExceptions(MethodArgumentNotValidException e) {
+        List<String> errors = e.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .toList();
+
+        String message = "There is a validation error: " + String.join(", ", errors);
+
+        return new ErrorMessage(message);
+    }
+
+    @ExceptionHandler(UsernameAlreadyTakenException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorMessage handleUsernameAlreadyTakenException(UsernameAlreadyTakenException e) {
         return new ErrorMessage(e.getMessage());
     }
 
