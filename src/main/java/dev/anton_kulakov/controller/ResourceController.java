@@ -8,10 +8,12 @@ import dev.anton_kulakov.service.handler.ResourceHandlerFactory;
 import dev.anton_kulakov.service.handler.ResourceHandlerInterface;
 import dev.anton_kulakov.streaming.StreamingResponseFactory;
 import dev.anton_kulakov.util.PathProcessor;
+import dev.anton_kulakov.validation.ValidPath;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
@@ -21,6 +23,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
+@Validated
 public class ResourceController {
     public final ResourceHandlerFactory resourceHandlerFactory;
     private final ResourceSearchService resourceSearchService;
@@ -28,14 +31,14 @@ public class ResourceController {
     private final PathProcessor pathProcessor;
 
     @GetMapping("/api/resource")
-    public ResponseEntity<ResourceInfoDto> getInfo(@RequestParam String path) {
+    public ResponseEntity<ResourceInfoDto> getInfo(@ValidPath @RequestParam String path) {
         ResourceHandlerInterface resourceHandler = resourceHandlerFactory.getResourceHandler(path);
         ResourceInfoDto resourceInfoDto = resourceHandler.getInfo(path);
         return ResponseEntity.ok().body(resourceInfoDto);
     }
 
     @GetMapping("/api/resource/download")
-    public ResponseEntity<StreamingResponseBody> download(@RequestParam String path) {
+    public ResponseEntity<StreamingResponseBody> download(@ValidPath @RequestParam String path) {
         resourceHandlerFactory.getResourceHandler(path).getInfo(path);
         return ResponseEntity.ok()
                 .contentType(streamingResponseFactory.getContentType(path))
@@ -43,7 +46,7 @@ public class ResourceController {
     }
 
     @DeleteMapping("/api/resource")
-    public ResponseEntity<Void> delete(@RequestParam String path) {
+    public ResponseEntity<Void> delete(@ValidPath @RequestParam String path) {
         ResourceHandlerInterface resourceHandler = resourceHandlerFactory.getResourceHandler(path);
         resourceHandler.delete(path);
         return ResponseEntity.noContent().build();
@@ -51,8 +54,8 @@ public class ResourceController {
 
     @GetMapping("/api/resource/move")
     public ResponseEntity<ResourceInfoDto> move(@AuthenticationPrincipal SecurityUser securityUser,
-                                                @RequestParam String from,
-                                                @RequestParam String to) {
+                                                @ValidPath @RequestParam String from,
+                                                @ValidPath @RequestParam String to) {
         String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
         String fromPath = pathProcessor.getPathWithUserRootFolder(from, userRootFolder);
         String toPath = pathProcessor.getPathWithUserRootFolder(to, userRootFolder);
@@ -72,13 +75,13 @@ public class ResourceController {
 
     @PostMapping("/api/resource")
     public ResponseEntity<List<ResourceInfoDto>> upload(@AuthenticationPrincipal SecurityUser securityUser,
-                                                        @RequestParam String path,
+                                                        @ValidPath @RequestParam String path,
                                                         @RequestParam("object") List<MultipartFile> files) {
         String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
         List<ResourceInfoDto> resourceInfoDtos = new ArrayList<>();
 
         for (MultipartFile file : files) {
-            String fullPath = userRootFolder + file.getOriginalFilename();
+            String fullPath = userRootFolder + path + file.getOriginalFilename();
             ResourceHandlerInterface resourceHandler = resourceHandlerFactory.getResourceHandler(fullPath);
 
             if (resourceHandler.isExists(fullPath)) {

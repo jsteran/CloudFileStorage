@@ -54,7 +54,7 @@ public class FileResourceHandler implements ResourceHandlerInterface {
 
     @Override
     public ResourceInfoDto upload(String path, MultipartFile file) {
-        if (minioService.isFileExists(path)) {
+        if (minioService.isFileExists(path + file)) {
             throw new ResourceAlreadyExistsException("The file already exists at the destination path: %s".formatted(path));
         }
 

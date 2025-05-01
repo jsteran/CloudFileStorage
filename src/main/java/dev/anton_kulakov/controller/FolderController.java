@@ -7,6 +7,7 @@ import dev.anton_kulakov.model.SecurityUser;
 import dev.anton_kulakov.service.FolderService;
 import dev.anton_kulakov.service.MinioService;
 import dev.anton_kulakov.util.PathProcessor;
+import dev.anton_kulakov.validation.ValidPath;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,7 +26,7 @@ public class FolderController {
 
     @GetMapping
     public ResponseEntity<List<ResourceInfoDto>> getFolderContent(@AuthenticationPrincipal SecurityUser securityUser,
-                                                                  @RequestParam String path) {
+                                                                  @ValidPath @RequestParam String path) {
         String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
         List<ResourceInfoDto> resources = folderService.getContent(userRootFolder + path);
         return ResponseEntity.ok(resources);
@@ -33,7 +34,7 @@ public class FolderController {
 
     @PostMapping
     public ResponseEntity<ResourceInfoDto> create(@AuthenticationPrincipal SecurityUser securityUser,
-                                                  @RequestParam String path) {
+                                                  @ValidPath @RequestParam String path) {
         String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
         String fullPath = userRootFolder + path;
         String newFolderName = pathProcessor.getLastFolderName(fullPath);

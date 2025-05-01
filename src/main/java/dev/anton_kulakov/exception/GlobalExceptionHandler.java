@@ -1,5 +1,7 @@
 package dev.anton_kulakov.exception;
 
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -24,7 +26,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorMessage handleValidationExceptions(MethodArgumentNotValidException e) {
+    public ErrorMessage handleValidationException(MethodArgumentNotValidException e) {
         List<String> errors = e.getBindingResult()
                 .getFieldErrors()
                 .stream()
@@ -32,7 +34,18 @@ public class GlobalExceptionHandler {
                 .toList();
 
         String message = "There is a validation error: " + String.join(", ", errors);
+        return new ErrorMessage(message);
+    }
 
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorMessage handleConstraintViolationException(ConstraintViolationException e) {
+        List<String> errors = e.getConstraintViolations()
+                .stream()
+                .map(ConstraintViolation::getMessage)
+                .toList();
+
+        String message = "There is a validation error: " + String.join(", ", errors);
         return new ErrorMessage(message);
     }
 
@@ -44,7 +57,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorMessage handleDefaultException() {
-        return new ErrorMessage("We're sorry, but an unexpected error has occurred. Please try again later");
+    public ErrorMessage handleDefaultException(Exception e) {
+        return new ErrorMessage("We're sorry, but an unexpected error has occurred. Please try again later" + e);
     }
 }
