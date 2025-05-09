@@ -14,6 +14,7 @@ import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.tags.Tag;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -24,13 +25,32 @@ import java.util.Map;
 
 @Configuration
 public class OpenApiConfig {
-    public static final String TAG_AUTH = "Authentication";
+    public static final String AUTHENTICATION_TAG = "Authentication";
+    public static final String USER_TAG = "User controller";
+    public static final String REGISTRATION_TAG = "Registration controller";
+    public static final String RESOURCE_TAG = "Resource controller";
+    public static final String FOLDER_TAG = "Folder controller";
 
     @Bean
     public OpenAPI customOpenApi() {
         return new OpenAPI()
                 .info(new Info().title("Cloud file storage API").version("1.0.0")
                         .description("API documentation for the cloud file storage project"))
+                .addTagsItem(new Tag()
+                        .name(AUTHENTICATION_TAG)
+                        .description("Endpoints for authentication and session management"))
+                .addTagsItem(new Tag()
+                        .name(USER_TAG)
+                        .description("A controller for managing user accounts in an application"))
+                .addTagsItem(new Tag()
+                        .name(REGISTRATION_TAG)
+                        .description("..."))
+                .addTagsItem(new Tag()
+                        .name(RESOURCE_TAG)
+                        .description("A controller for managing files and folders"))
+                .addTagsItem(new Tag()
+                        .name(FOLDER_TAG)
+                        .description("A controller for managing folder-specific features"))
                 .components(new Components()
                         .addSecuritySchemes("cookieAuth", new SecurityScheme()
                                 .type(SecurityScheme.Type.APIKEY)
@@ -47,28 +67,23 @@ public class OpenApiConfig {
             RequestBody signInRequestBody = new RequestBody()
                     .description("User credentials for authentication")
                     .required(true)
-                    .content(new Content().addMediaType(
-                            MediaType.APPLICATION_JSON_VALUE,
-                            new io.swagger.v3.oas.models.media.MediaType().schema(new Schema<UserRequestDto>().$ref("#/components/schemas/UserRequestDto"))
-                    ));
+                    .content(new Content().addMediaType(MediaType.APPLICATION_JSON_VALUE, new io.swagger.v3.oas.models.media.MediaType()
+                            .schema(new Schema<UserRequestDto>().$ref("#/components/schemas/UserRequestDto"))));
 
             ApiResponses signInResponses = new ApiResponses()
                     .addApiResponse(String.valueOf(HttpStatus.OK.value()), new ApiResponse()
                             .description("Authentication successful, session is created")
-                            .content(new Content().addMediaType(
-                                    MediaType.APPLICATION_JSON_VALUE, new io.swagger.v3.oas.models.media.MediaType()
-                                            .schema(new Schema<Map<String, String>>()
-                                                    .addProperty("username", new StringSchema().example("test_user"))))))
-                    .addApiResponse(String.valueOf(HttpStatus.UNAUTHORIZED.value()),
-                            new ApiResponse()
-                                    .description("Invalid credentials")
-                                    .content(new Content().addMediaType(
-                                            MediaType.APPLICATION_JSON_VALUE, new io.swagger.v3.oas.models.media.MediaType()
-                                                    .schema(new Schema<Map<String, String>>()
-                                                            .addProperty("message", new StringSchema().example("Invalid credentials"))))));
+                            .content(new Content().addMediaType(MediaType.APPLICATION_JSON_VALUE, new io.swagger.v3.oas.models.media.MediaType()
+                                    .schema(new Schema<Map<String, String>>().addProperty("username", new StringSchema().example("test_user")))
+                            )))
+                    .addApiResponse(String.valueOf(HttpStatus.UNAUTHORIZED.value()), new ApiResponse()
+                            .description("Invalid credentials")
+                            .content(new Content().addMediaType(MediaType.APPLICATION_JSON_VALUE, new io.swagger.v3.oas.models.media.MediaType()
+                                    .schema(new Schema<Map<String, String>>().addProperty("message", new StringSchema().example("Invalid credentials")))
+                            )));
 
             signInOperation
-                    .addTagsItem(TAG_AUTH)
+                    .addTagsItem(AUTHENTICATION_TAG)
                     .summary("User sign-in")
                     .description("Authenticates a user and establishes a session. The session ID is returned in the 'SESSION' cookie")
                     .operationId("signInUser")
@@ -84,16 +99,15 @@ public class OpenApiConfig {
             ApiResponses signOutResponses = new ApiResponses()
                     .addApiResponse(String.valueOf(HttpStatus.OK.value()), new ApiResponse()
                             .description("Logout is successful, session is invalidated")
-                            .content(new Content().addMediaType(
-                                    MediaType.APPLICATION_JSON_VALUE, new io.swagger.v3.oas.models.media.MediaType()
-                                            .schema(new Schema<Map<String, String>>()
-                                                    .addProperty("message", new StringSchema().example("Logout is successful"))))))
+                            .content(new Content().addMediaType(MediaType.APPLICATION_JSON_VALUE, new io.swagger.v3.oas.models.media.MediaType()
+                                    .schema(new Schema<Map<String, String>>().addProperty("message", new StringSchema().example("Logout is successful")))
+                            )))
                     .addApiResponse(String.valueOf(HttpStatus.UNAUTHORIZED.value()),
                             new ApiResponse()
                                     .description("user is not authenticated (there is no active session to log out)"));
 
             signOutOperation
-                    .addTagsItem(TAG_AUTH)
+                    .addTagsItem(AUTHENTICATION_TAG)
                     .summary("User sign-out")
                     .description("Invalidates the current user's session. Requires an active session (SESSION cookie).")
                     .operationId("signOutUser")

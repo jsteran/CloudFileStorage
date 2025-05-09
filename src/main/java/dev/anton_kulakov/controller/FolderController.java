@@ -1,5 +1,6 @@
 package dev.anton_kulakov.controller;
 
+import dev.anton_kulakov.config.OpenApiConfig;
 import dev.anton_kulakov.dto.ResourceInfoDto;
 import dev.anton_kulakov.exception.ResourceAlreadyExistsException;
 import dev.anton_kulakov.exception.ResourceNotFoundException;
@@ -22,7 +23,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/directory")
-@Tag(name = "Folder controller", description = "A controller for managing folder-specific features")
+@Tag(name = OpenApiConfig.FOLDER_TAG)
 public class FolderController {
     private final FolderService folderService;
     private final MinioService minioService;

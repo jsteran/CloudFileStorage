@@ -1,5 +1,6 @@
 package dev.anton_kulakov.controller;
 
+import dev.anton_kulakov.config.OpenApiConfig;
 import dev.anton_kulakov.dto.UserRequestDto;
 import dev.anton_kulakov.dto.UserResponseDto;
 import dev.anton_kulakov.mapper.UserMapper;
@@ -29,7 +30,7 @@ import java.security.Principal;
 
 @RestController
 @RequiredArgsConstructor
-@Tag(name = "User controller", description = "A controller for managing user accounts in an application")
+@Tag(name = OpenApiConfig.USER_TAG)
 public class UserController {
     private final UserService userService;
     private final UserMapper userMapper;

@@ -1,5 +1,6 @@
 package dev.anton_kulakov.controller;
 
+import dev.anton_kulakov.config.OpenApiConfig;
 import dev.anton_kulakov.dto.ResourceInfoDto;
 import dev.anton_kulakov.exception.ResourceAlreadyExistsException;
 import dev.anton_kulakov.model.SecurityUser;
@@ -32,7 +33,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @Validated
-@Tag(name = "Resource controller", description = "A controller for managing files and folders")
+@Tag(name = OpenApiConfig.RESOURCE_TAG)
 public class ResourceController {
     public final ResourceHandlerFactory resourceHandlerFactory;
     private final ResourceSearchService resourceSearchService;
