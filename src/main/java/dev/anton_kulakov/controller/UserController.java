@@ -9,6 +9,8 @@ import dev.anton_kulakov.service.UserDetailsServiceImpl;
 import dev.anton_kulakov.service.UserService;
 import dev.anton_kulakov.util.PathProcessor;
 import dev.anton_kulakov.util.SecurityContextUtil;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
@@ -27,6 +29,7 @@ import java.security.Principal;
 
 @RestController
 @RequiredArgsConstructor
+@Tag(name = "User controller", description = "A controller for managing user accounts in an application")
 public class UserController {
     private final UserService userService;
     private final UserMapper userMapper;
@@ -35,15 +38,17 @@ public class UserController {
     private final UserDetailsServiceImpl userDetailsServiceImpl;
     private final SecurityContextUtil securityContextUtil;
 
+    @Operation(summary = "Getting the current user")
     @GetMapping("/api/user/me")
     public ResponseEntity<UserResponseDto> getUser(Principal principal) {
         return ResponseEntity.ok(new UserResponseDto(principal.getName()));
     }
 
+    @Operation(summary = "Creating a new user")
     @PostMapping("/api/auth/sign-up")
-    public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody UserRequestDto userRequestDto,
-                                                      HttpServletRequest req,
-                                                      HttpServletResponse resp) {
+    public ResponseEntity<UserResponseDto> create(@Valid @RequestBody UserRequestDto userRequestDto,
+                                                  HttpServletRequest req,
+                                                  HttpServletResponse resp) {
         User user = userService.createUser(userRequestDto);
         UserResponseDto userResponseDto = userMapper.toResponseDto(user);
         String userRootFolder = pathProcessor.getUserRootFolder(user.getId());

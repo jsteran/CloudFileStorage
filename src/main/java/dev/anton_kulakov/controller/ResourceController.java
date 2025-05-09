@@ -9,6 +9,14 @@ import dev.anton_kulakov.service.handler.ResourceHandlerInterface;
 import dev.anton_kulakov.streaming.StreamingResponseFactory;
 import dev.anton_kulakov.util.PathProcessor;
 import dev.anton_kulakov.validation.ValidPath;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,38 +32,68 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @Validated
+@Tag(name = "Resource controller", description = "A controller for managing files and folders")
 public class ResourceController {
     public final ResourceHandlerFactory resourceHandlerFactory;
     private final ResourceSearchService resourceSearchService;
     private final StreamingResponseFactory streamingResponseFactory;
     private final PathProcessor pathProcessor;
 
+    @Operation(
+            summary = "Getting information about a file or folder",
+            description = "Provides the user with information about the path to a resource, its name, and type. It also displays the file size.")
     @GetMapping("/api/resource")
-    public ResponseEntity<ResourceInfoDto> getInfo(@ValidPath @RequestParam String path) {
-        ResourceHandlerInterface resourceHandler = resourceHandlerFactory.getResourceHandler(path);
-        ResourceInfoDto resourceInfoDto = resourceHandler.getInfo(path);
+    public ResponseEntity<ResourceInfoDto> getInfo(
+            @AuthenticationPrincipal SecurityUser securityUser,
+            @ValidPath
+            @RequestParam
+            @Parameter(description = "The path to the folder or file", example = "folder/file.txt") String path) {
+        String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
+        String fullPath = userRootFolder + path;
+        ResourceHandlerInterface resourceHandler = resourceHandlerFactory.getResourceHandler(fullPath);
+        ResourceInfoDto resourceInfoDto = resourceHandler.getInfo(fullPath);
         return ResponseEntity.ok().body(resourceInfoDto);
     }
 
+    @Operation(summary = "Downloading a folder or a file")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", content = {
+                    @Content(mediaType = "application/octet-stream", schema = @Schema(type = "string", format = "binary", description = "file")),
+                    @Content(mediaType = "application/zip", schema = @Schema(type = "string", format = "binary", description = "zip archive of the folder"))
+            })
+    })
     @GetMapping("/api/resource/download")
-    public ResponseEntity<StreamingResponseBody> download(@ValidPath @RequestParam String path) {
+    public ResponseEntity<StreamingResponseBody> download(
+            @ValidPath
+            @RequestParam
+            @Parameter(description = "The path to the folder or file you want to download", example = "folder/file.txt") String path) {
         resourceHandlerFactory.getResourceHandler(path).getInfo(path);
         return ResponseEntity.ok()
                 .contentType(streamingResponseFactory.getContentType(path))
                 .body(streamingResponseFactory.createResponse(path));
     }
 
+    @Operation(summary = "Deleting a folder or a file")
     @DeleteMapping("/api/resource")
-    public ResponseEntity<Void> delete(@ValidPath @RequestParam String path) {
+    public ResponseEntity<Void> delete(
+            @ValidPath
+            @RequestParam
+            @Parameter(description = "The path to the folder or file that you want to delete", example = "folder/file.txt") String path) {
         ResourceHandlerInterface resourceHandler = resourceHandlerFactory.getResourceHandler(path);
         resourceHandler.delete(path);
         return ResponseEntity.noContent().build();
     }
 
+    @Operation(summary = "Move or rename a folder or a file")
     @GetMapping("/api/resource/move")
-    public ResponseEntity<ResourceInfoDto> move(@AuthenticationPrincipal SecurityUser securityUser,
-                                                @ValidPath @RequestParam String from,
-                                                @ValidPath @RequestParam String to) {
+    public ResponseEntity<ResourceInfoDto> move(
+            @AuthenticationPrincipal SecurityUser securityUser,
+            @ValidPath
+            @RequestParam
+            @Parameter(description = "The path to the folder or file that we want to rename or move", example = "folder/file.txt") String from,
+            @ValidPath
+            @RequestParam
+            @Parameter(description = "The new path to the folder or file that we are moving or renaming", example = "folder/new_file.txt") String to) {
         String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
         String fromPath = pathProcessor.getPathWithUserRootFolder(from, userRootFolder);
         String toPath = pathProcessor.getPathWithUserRootFolder(to, userRootFolder);
@@ -65,18 +103,27 @@ public class ResourceController {
         return ResponseEntity.ok().body(resourceInfoDto);
     }
 
+    @Operation(summary = "Search for files and folders that match the user's search criteria")
     @GetMapping("/api/resource/search")
-    public ResponseEntity<List<ResourceInfoDto>> search(@AuthenticationPrincipal SecurityUser securityUser,
-                                                        @RequestParam String query) {
+    public ResponseEntity<List<ResourceInfoDto>> search(
+            @AuthenticationPrincipal SecurityUser securityUser,
+            @RequestParam
+            @Parameter(description = "The name of the folder or file the user is searching for", example = "picture") String query) {
         String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
         List<ResourceInfoDto> resources = resourceSearchService.search(userRootFolder, query.toLowerCase());
         return ResponseEntity.ok().body(resources);
     }
 
+    @Operation(summary = "Uploading folders and files to the cloud storage")
     @PostMapping("/api/resource")
-    public ResponseEntity<List<ResourceInfoDto>> upload(@AuthenticationPrincipal SecurityUser securityUser,
-                                                        @ValidPath @RequestParam String path,
-                                                        @RequestParam("object") List<MultipartFile> files) {
+    public ResponseEntity<List<ResourceInfoDto>> upload(
+            @AuthenticationPrincipal SecurityUser securityUser,
+            @ValidPath
+            @RequestParam
+            @Parameter(description = "The path to the folder where the files or the other folder will be uploaded", example = "folder/") String path,
+            @Size(min = 1)
+            @RequestParam("object")
+            @Parameter(description = "list of files to download") List<MultipartFile> files) {
         String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
         List<ResourceInfoDto> resourceInfoDtos = new ArrayList<>();
 

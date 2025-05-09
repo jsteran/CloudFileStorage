@@ -1,5 +1,6 @@
 package dev.anton_kulakov.exception;
 
+import dev.anton_kulakov.dto.ErrorMessage;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;

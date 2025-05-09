@@ -1,5 +1,6 @@
-package dev.anton_kulakov.exception;
+package dev.anton_kulakov.dto;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -9,6 +10,8 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
+@Schema(description = "DTO for displaying error messages")
 public class ErrorMessage {
+    @Schema(description = "Error message", example = "The file is already exists")
     private String message;
 }

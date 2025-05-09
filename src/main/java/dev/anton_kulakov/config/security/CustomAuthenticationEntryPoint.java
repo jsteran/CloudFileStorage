@@ -1,7 +1,7 @@
 package dev.anton_kulakov.config.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.anton_kulakov.exception.ErrorMessage;
+import dev.anton_kulakov.dto.ErrorMessage;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
