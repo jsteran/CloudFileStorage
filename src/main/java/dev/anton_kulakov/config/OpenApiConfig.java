@@ -76,10 +76,20 @@ public class OpenApiConfig {
                             .content(new Content().addMediaType(MediaType.APPLICATION_JSON_VALUE, new io.swagger.v3.oas.models.media.MediaType()
                                     .schema(new Schema<Map<String, String>>().addProperty("username", new StringSchema().example("test_user")))
                             )))
+                    .addApiResponse(String.valueOf(HttpStatus.BAD_REQUEST.value()), new ApiResponse()
+                            .description("Validation error")
+                            .content(new Content().addMediaType(MediaType.APPLICATION_JSON_VALUE, new io.swagger.v3.oas.models.media.MediaType()
+                                    .schema(new Schema<Map<String, String>>().addProperty("message", new StringSchema().example("There is a validation error. username: Username should be longer than 5 characters")))
+                            )))
                     .addApiResponse(String.valueOf(HttpStatus.UNAUTHORIZED.value()), new ApiResponse()
                             .description("Invalid credentials")
                             .content(new Content().addMediaType(MediaType.APPLICATION_JSON_VALUE, new io.swagger.v3.oas.models.media.MediaType()
                                     .schema(new Schema<Map<String, String>>().addProperty("message", new StringSchema().example("Invalid credentials")))
+                            )))
+                    .addApiResponse(String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value()), new ApiResponse()
+                            .description("Unexpected error")
+                            .content(new Content().addMediaType(MediaType.APPLICATION_JSON_VALUE, new io.swagger.v3.oas.models.media.MediaType()
+                                    .schema(new Schema<Map<String, String>>().addProperty("message", new StringSchema().example("We're sorry, but an unexpected error has occurred. Please try again later")))
                             )));
 
             signInOperation
@@ -103,6 +113,11 @@ public class OpenApiConfig {
                             .description("User is not authenticated (there is no active session to sign out)")
                             .content(new Content().addMediaType(MediaType.APPLICATION_JSON_VALUE, new io.swagger.v3.oas.models.media.MediaType()
                                     .schema(new Schema<Map<String, String>>().addProperty("message", new StringSchema().example("Invalid credentials")))
+                            )))
+                    .addApiResponse(String.valueOf(HttpStatus.INTERNAL_SERVER_ERROR.value()), new ApiResponse()
+                            .description("Unexpected error")
+                            .content(new Content().addMediaType(MediaType.APPLICATION_JSON_VALUE, new io.swagger.v3.oas.models.media.MediaType()
+                                    .schema(new Schema<Map<String, String>>().addProperty("message", new StringSchema().example("We're sorry, but an unexpected error has occurred. Please try again later")))
                             )));
 
             signOutOperation
