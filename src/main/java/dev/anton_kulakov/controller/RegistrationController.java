@@ -56,7 +56,8 @@ public class RegistrationController {
                                             value = "{\"username\":\"test_username\"}"
                                     )
                             }
-                    )),
+                    )
+            ),
             @ApiResponse(
                     responseCode = "400",
                     description = "Validation error",
@@ -69,7 +70,8 @@ public class RegistrationController {
                                             value = "{\"message\":\"There is a validation error. username: Username should be longer than 5 characters\"}"
                                     )
                             }
-                    )),
+                    )
+            ),
             @ApiResponse(
                     responseCode = "409",
                     description = "Username is already taken",
@@ -82,7 +84,8 @@ public class RegistrationController {
                                             value = "{\"message\":\"User with username test_user is already exists\"}"
                                     )
                             }
-                    )),
+                    )
+            ),
             @ApiResponse(
                     responseCode = "500",
                     description = "Unexpected error",
@@ -95,7 +98,8 @@ public class RegistrationController {
                                             value = "{\"message\":\"We're sorry, but an unexpected error has occurred. Please try again later\"}"
                                     )
                             }
-                    ))
+                    )
+            )
     })
     @PostMapping("/api/auth/sign-up")
     public ResponseEntity<UserResponseDto> create(@Valid @RequestBody UserRequestDto userRequestDto,
