@@ -65,7 +65,7 @@ public class SecurityConfig {
 
     @Bean
     public LogoutSuccessHandler customLogoutSuccessHandler() {
-        return new CustomLogoutSuccessHandler();
+        return new CustomLogoutSuccessHandler(objectMapper);
     }
 
     @Bean

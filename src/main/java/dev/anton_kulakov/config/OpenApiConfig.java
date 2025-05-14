@@ -97,14 +97,13 @@ public class OpenApiConfig {
             Operation signOutOperation = new Operation();
 
             ApiResponses signOutResponses = new ApiResponses()
-                    .addApiResponse(String.valueOf(HttpStatus.OK.value()), new ApiResponse()
-                            .description("Logout is successful, session is invalidated")
+                    .addApiResponse(String.valueOf(HttpStatus.NO_CONTENT.value()), new ApiResponse()
+                            .description("Logout is successful, session is invalidated"))
+                    .addApiResponse(String.valueOf(HttpStatus.UNAUTHORIZED.value()), new ApiResponse()
+                            .description("User is not authenticated (there is no active session to sign out)")
                             .content(new Content().addMediaType(MediaType.APPLICATION_JSON_VALUE, new io.swagger.v3.oas.models.media.MediaType()
-                                    .schema(new Schema<Map<String, String>>().addProperty("message", new StringSchema().example("Logout is successful")))
-                            )))
-                    .addApiResponse(String.valueOf(HttpStatus.UNAUTHORIZED.value()),
-                            new ApiResponse()
-                                    .description("user is not authenticated (there is no active session to log out)"));
+                                    .schema(new Schema<Map<String, String>>().addProperty("message", new StringSchema().example("Invalid credentials")))
+                            )));
 
             signOutOperation
                     .addTagsItem(AUTHENTICATION_TAG)

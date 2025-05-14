@@ -1,6 +1,7 @@
 package dev.anton_kulakov.controller;
 
 import dev.anton_kulakov.config.OpenApiConfig;
+import dev.anton_kulakov.dto.ErrorMessage;
 import dev.anton_kulakov.dto.UserRequestDto;
 import dev.anton_kulakov.dto.UserResponseDto;
 import dev.anton_kulakov.mapper.UserMapper;
@@ -11,6 +12,11 @@ import dev.anton_kulakov.service.UserService;
 import dev.anton_kulakov.util.PathProcessor;
 import dev.anton_kulakov.util.SecurityContextUtil;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -35,7 +41,62 @@ public class RegistrationController {
     private final PathProcessor pathProcessor;
     private final UserDetailsServiceImpl userDetailsServiceImpl;
     private final SecurityContextUtil securityContextUtil;
+
     @Operation(summary = "Creating a new user")
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "201",
+                    description = "Created",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = UserResponseDto.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Successful operation example",
+                                            value = "{\"username\":\"test_username\"}"
+                                    )
+                            }
+                    )),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Validation error",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorMessage.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Validation error example",
+                                            value = "{\"message\":\"There is a validation error. username: Username should be longer than 5 characters\"}"
+                                    )
+                            }
+                    )),
+            @ApiResponse(
+                    responseCode = "409",
+                    description = "Username is already taken",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorMessage.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Validation error example",
+                                            value = "{\"message\":\"User with username test_user is already exists\"}"
+                                    )
+                            }
+                    )),
+            @ApiResponse(
+                    responseCode = "500",
+                    description = "Unexpected error",
+                    content = @Content(
+                            mediaType = "application/json",
+                            schema = @Schema(implementation = ErrorMessage.class),
+                            examples = {
+                                    @ExampleObject(
+                                            name = "Validation error example",
+                                            value = "{\"message\":\"We're sorry, but an unexpected error has occurred. Please try again later\"}"
+                                    )
+                            }
+                    ))
+    })
     @PostMapping("/api/auth/sign-up")
     public ResponseEntity<UserResponseDto> create(@Valid @RequestBody UserRequestDto userRequestDto,
                                                   HttpServletRequest req,

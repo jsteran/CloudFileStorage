@@ -34,7 +34,7 @@ public class GlobalExceptionHandler {
                 .map(error -> error.getField() + ": " + error.getDefaultMessage())
                 .toList();
 
-        String message = "There is a validation error: " + String.join(", ", errors);
+        String message = "There is a validation error. " + String.join(", ", errors);
         return new ErrorMessage(message);
     }
 
@@ -46,7 +46,7 @@ public class GlobalExceptionHandler {
                 .map(ConstraintViolation::getMessage)
                 .toList();
 
-        String message = "There is a validation error: " + String.join(", ", errors);
+        String message = "There is a validation error. " + String.join(", ", errors);
         return new ErrorMessage(message);
     }
 
