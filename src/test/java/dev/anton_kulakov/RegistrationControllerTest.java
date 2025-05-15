@@ -25,7 +25,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @Transactional
 public class RegistrationControllerTest {
-
     @Autowired
     private MockMvc mvc;
 
@@ -55,6 +54,40 @@ public class RegistrationControllerTest {
                         .content(requestBody))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.username").value("test_user1"));
+    }
+
+    @SneakyThrows
+    @Test
+    @DisplayName("A registration request with invalid username will result in an error")
+    void shouldThrowExceptionIfUsernameNotValid() {
+        String requestBody = """
+                {
+                  "username": "test",
+                  "password": "test_password"
+                }
+                """;
+
+        mvc.perform(post("http://localhost:8080/api/auth/sign-up")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest());
+    }
+
+    @SneakyThrows
+    @Test
+    @DisplayName("A registration request with invalid password will result in an error")
+    void shouldThrowExceptionCredentialsAreNotValid() {
+        String requestBody = """
+                {
+                  "username": "test_user1",
+                  "password": "pass"
+                }
+                """;
+
+        mvc.perform(post("http://localhost:8080/api/auth/sign-up")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(requestBody))
+                .andExpect(status().isBadRequest());
     }
 
     @SneakyThrows
