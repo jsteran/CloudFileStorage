@@ -82,7 +82,7 @@ public class OpenApiConfig {
                                     .schema(new Schema<Map<String, String>>().addProperty("message", new StringSchema().example("There is a validation error. username: Username should be longer than 5 characters")))
                             )))
                     .addApiResponse(String.valueOf(HttpStatus.UNAUTHORIZED.value()), new ApiResponse()
-                            .description("Invalid credentials")
+                            .description("User is not authenticated")
                             .content(new Content().addMediaType(MediaType.APPLICATION_JSON_VALUE, new io.swagger.v3.oas.models.media.MediaType()
                                     .schema(new Schema<Map<String, String>>().addProperty("message", new StringSchema().example("Invalid credentials")))
                             )))

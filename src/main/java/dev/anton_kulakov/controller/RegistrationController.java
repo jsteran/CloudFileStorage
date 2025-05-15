@@ -52,8 +52,11 @@ public class RegistrationController {
                             schema = @Schema(implementation = UserResponseDto.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Successful operation example",
-                                            value = "{\"username\":\"test_username\"}"
+                                            value = """
+                                                    {
+                                                        "username": "test_username"
+                                                    }
+                                                    """
                                     )
                             }
                     )
@@ -66,8 +69,11 @@ public class RegistrationController {
                             schema = @Schema(implementation = ErrorMessage.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Validation error example",
-                                            value = "{\"message\":\"There is a validation error. username: Username should be longer than 5 characters\"}"
+                                            value = """
+                                                    {
+                                                        "message": "There is a validation error. username: Username should be longer than 5 characters"
+                                                    }
+                                                    """
                                     )
                             }
                     )
@@ -80,8 +86,11 @@ public class RegistrationController {
                             schema = @Schema(implementation = ErrorMessage.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Validation error example",
-                                            value = "{\"message\":\"User with username test_user is already exists\"}"
+                                            value = """
+                                                    {
+                                                        "message": "User with username test_user is already exists"
+                                                    }
+                                                    """
                                     )
                             }
                     )
@@ -94,8 +103,11 @@ public class RegistrationController {
                             schema = @Schema(implementation = ErrorMessage.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Validation error example",
-                                            value = "{\"message\":\"We're sorry, but an unexpected error has occurred. Please try again later\"}"
+                                            value = """
+                                                    {
+                                                        "message": "We're sorry, but an unexpected error has occurred. Please try again later"
+                                                    }
+                                                    """
                                     )
                             }
                     )

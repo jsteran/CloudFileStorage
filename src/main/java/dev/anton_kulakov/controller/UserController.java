@@ -31,8 +31,11 @@ public class UserController {
                             schema = @Schema(implementation = UserResponseDto.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Successful operation example",
-                                            value = "{\"username\":\"test_username\"}"
+                                            value = """
+                                                    {
+                                                        "username": "test_username"
+                                                    }
+                                                    """
                                     )
                             }
                     )
@@ -45,8 +48,11 @@ public class UserController {
                             schema = @Schema(implementation = ErrorMessage.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Unauthorized user error",
-                                            value = "{\"message\":\"Invalid credentials\"}"
+                                            value = """
+                                                    {
+                                                        "message": "Invalid credentials"
+                                                    }
+                                                    """
                                     )
                             }
                     )
@@ -59,8 +65,11 @@ public class UserController {
                             schema = @Schema(implementation = ErrorMessage.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Validation error example",
-                                            value = "{\"message\":\"We're sorry, but an unexpected error has occurred. Please try again later\"}"
+                                            value = """
+                                                    {
+                                                        "message": "We're sorry, but an unexpected error has occurred. Please try again later"
+                                                    }
+                                                    """
                                     )
                             }
                     ))

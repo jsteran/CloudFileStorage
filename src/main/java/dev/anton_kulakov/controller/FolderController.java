@@ -53,8 +53,11 @@ public class FolderController {
                             schema = @Schema(implementation = ErrorMessage.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Validation error example",
-                                            value = "{\"message\":\"There is a validation error. The path is invalid\"}"
+                                            value = """
+                                                    {
+                                                        "message": "There is a validation error. The path is invalid"
+                                                    }
+                                                    """
                                     )
                             }
                     )
@@ -67,8 +70,11 @@ public class FolderController {
                             schema = @Schema(implementation = ErrorMessage.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Unauthorized user error",
-                                            value = "{\"message\":\"Invalid credentials\"}"
+                                            value = """
+                                                    {
+                                                        "message": "Invalid credentials"
+                                                    }
+                                                    """
                                     )
                             }
                     )
@@ -81,8 +87,11 @@ public class FolderController {
                             schema = @Schema(implementation = ErrorMessage.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Non-existent folder error",
-                                            value = "{\"message\":\"The requested folder could not be found\"}"
+                                            value = """
+                                                    {
+                                                        "message": "The requested folder could not be found"
+                                                    }
+                                                    """
                                     )
                             }
                     )
@@ -95,8 +104,11 @@ public class FolderController {
                             schema = @Schema(implementation = ErrorMessage.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Validation error example",
-                                            value = "{\"message\":\"We're sorry, but an unexpected error has occurred. Please try again later\"}"
+                                            value = """
+                                                    {
+                                                        "message": "We're sorry, but an unexpected error has occurred. Please try again later"
+                                                    }
+                                                    """
                                     )
                             }
                     )
@@ -123,7 +135,6 @@ public class FolderController {
                             schema = @Schema(implementation = ResourceInfoDto.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Successful operation example",
                                             value = """
                                                     {
                                                       "path": "folder/nested_folder/",
@@ -142,8 +153,11 @@ public class FolderController {
                             schema = @Schema(implementation = ErrorMessage.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Validation error example",
-                                            value = "{\"message\":\"There is a validation error. The path is invalid\"}"
+                                            value = """
+                                                    {
+                                                        "message": "There is a validation error. The path is invalidr"
+                                                    }
+                                                    """
                                     )
                             }
                     )
@@ -156,8 +170,11 @@ public class FolderController {
                             schema = @Schema(implementation = ErrorMessage.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Unauthorized user error",
-                                            value = "{\"message\":\"Invalid credentials\"}"
+                                            value = """
+                                                    {
+                                                        "message": "Invalid credentials"
+                                                    }
+                                                    """
                                     )
                             }
                     )
@@ -170,22 +187,28 @@ public class FolderController {
                             schema = @Schema(implementation = ErrorMessage.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Non-existent folder error",
-                                            value = "{\"message\":\"The requested folder could not be found\"}"
+                                            value = """
+                                                    {
+                                                        "message": "The requested folder could not be found"
+                                                    }
+                                                    """
                                     )
                             }
                     )
             ),
             @ApiResponse(
                     responseCode = "409",
-                    description = "The folder is already exists☺",
+                    description = "The folder is already exists",
                     content = @Content(
                             mediaType = "application/json",
                             schema = @Schema(implementation = ErrorMessage.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Non-existent folder error",
-                                            value = "{\"message\":\"The folder with the path folder/nested_folder/ is already exists\"}"
+                                            value = """
+                                                    {
+                                                        "message": "The folder with the path folder/nested_folder/ is already exist"
+                                                    }
+                                                    """
                                     )
                             }
                     )
@@ -198,8 +221,11 @@ public class FolderController {
                             schema = @Schema(implementation = ErrorMessage.class),
                             examples = {
                                     @ExampleObject(
-                                            name = "Validation error example",
-                                            value = "{\"message\":\"We're sorry, but an unexpected error has occurred. Please try again later\"}"
+                                            value = """
+                                                    {
+                                                        "message": "We're sorry, but an unexpected error has occurred. Please try again later"
+                                                    }
+                                                    """
                                     )
                             }
                     )
