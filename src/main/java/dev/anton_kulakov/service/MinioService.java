@@ -6,7 +6,9 @@ import io.minio.errors.ErrorResponseException;
 import io.minio.messages.DeleteError;
 import io.minio.messages.DeleteObject;
 import io.minio.messages.Item;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -20,12 +22,32 @@ import java.util.function.Consumer;
 @RequiredArgsConstructor
 public class MinioService {
     private final MinioClient minioClient;
-    private static final String BUCKET_NAME = "user-files";
+
+    @Value("${minio.bucket-name}")
+    private String bucketName;
+
+    @PostConstruct
+    private void createBucketIfNotExists() {
+        try {
+            boolean isBucketExists = minioClient.bucketExists(BucketExistsArgs.builder()
+                    .bucket(bucketName)
+                    .build());
+
+            if (!isBucketExists) {
+                minioClient.makeBucket(MakeBucketArgs.builder()
+                        .bucket(bucketName)
+                        .build());
+            }
+        } catch (Exception e) {
+            throw new MinioException("There is an issue when verifying the existence of the bucket");
+        }
+
+    }
 
     public StatObjectResponse getStatObject(String path) {
         try {
             return minioClient.statObject(StatObjectArgs.builder()
-                    .bucket(BUCKET_NAME)
+                    .bucket(bucketName)
                     .object(path)
                     .build());
         } catch (Exception e) {
@@ -37,7 +59,7 @@ public class MinioService {
         List<Item> results = new ArrayList<>();
 
         Iterable<Result<Item>> objects = minioClient.listObjects(ListObjectsArgs.builder()
-                .bucket(BUCKET_NAME)
+                .bucket(bucketName)
                 .prefix(path)
                 .recursive(isRecursive)
                 .build());
@@ -56,7 +78,7 @@ public class MinioService {
     public void removeObject(String path) {
         try {
             minioClient.removeObject(RemoveObjectArgs.builder()
-                    .bucket(BUCKET_NAME)
+                    .bucket(bucketName)
                     .object(path)
                     .build());
         } catch (Exception e) {
@@ -66,7 +88,7 @@ public class MinioService {
 
     public void removeObjects(List<DeleteObject> objects) {
         Iterable<Result<DeleteError>> results = minioClient.removeObjects(RemoveObjectsArgs.builder()
-                .bucket(BUCKET_NAME)
+                .bucket(bucketName)
                 .objects(objects)
                 .build());
 
@@ -83,10 +105,10 @@ public class MinioService {
     public void copy(String from, String to) {
         try {
             minioClient.copyObject(CopyObjectArgs.builder()
-                    .bucket(BUCKET_NAME)
+                    .bucket(bucketName)
                     .object(to)
                     .source(CopySource.builder()
-                            .bucket(BUCKET_NAME)
+                            .bucket(bucketName)
                             .object(from)
                             .build())
                     .build());
@@ -98,7 +120,7 @@ public class MinioService {
 
     public void streamFile(String fileName, Consumer<InputStream> streamConsumer) {
         try (InputStream inputStream = minioClient.getObject(GetObjectArgs.builder()
-                .bucket(BUCKET_NAME)
+                .bucket(bucketName)
                 .object(fileName)
                 .build())) {
             streamConsumer.accept(inputStream);
@@ -110,7 +132,7 @@ public class MinioService {
     public void upload(String path, MultipartFile file) {
         try {
             minioClient.putObject(PutObjectArgs.builder()
-                    .bucket(BUCKET_NAME)
+                    .bucket(bucketName)
                     .object(path + file.getOriginalFilename())
                     .stream(file.getInputStream(), file.getSize(), -1)
                     .contentType(file.getContentType())
@@ -123,7 +145,7 @@ public class MinioService {
     public boolean isFileExists(String path) {
         try {
             minioClient.statObject(StatObjectArgs.builder()
-                    .bucket(BUCKET_NAME)
+                    .bucket(bucketName)
                     .object(path)
                     .build());
             return true;
@@ -141,7 +163,7 @@ public class MinioService {
 
     public boolean isFolderExists(String path) {
         return minioClient.listObjects(ListObjectsArgs.builder()
-                        .bucket(BUCKET_NAME)
+                        .bucket(bucketName)
                         .prefix(path)
                         .maxKeys(1)
                         .recursive(false)
@@ -152,7 +174,7 @@ public class MinioService {
     public void createEmptyFolder(String path) {
         try {
             minioClient.putObject(PutObjectArgs.builder()
-                    .bucket(BUCKET_NAME)
+                    .bucket(bucketName)
                     .object(path)
                     .stream(new ByteArrayInputStream(new byte[0]), 0, -1)
                     .build());

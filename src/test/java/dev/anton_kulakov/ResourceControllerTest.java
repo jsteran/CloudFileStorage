@@ -12,7 +12,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-public class ResourceControllerTest extends BaseMinioIntegrationTest {
+public class ResourceControllerTest extends BaseIntegrationTest {
     @Autowired
     private MockMvc mvc;
 
@@ -22,7 +22,7 @@ public class ResourceControllerTest extends BaseMinioIntegrationTest {
     void uploadFile_shouldAppearInUserRootFolder() {
         MockMultipartFile testFile = new MockMultipartFile(
                 "object",
-                "test-file3.txt",
+                "test-file.txt",
                 MediaType.TEXT_PLAIN_VALUE,
                 "Text from test-file.txt".getBytes()
         );
@@ -32,7 +32,7 @@ public class ResourceControllerTest extends BaseMinioIntegrationTest {
                         .param("path", ""))
                 .andExpect(status().isCreated());
 
-        mvc.perform(get("/api/resource?path=test-file.txt"))
+        mvc.perform(get("/api/resource?path=test-file3.txt"))
                 .andExpect(status().isOk());
     }
 }
