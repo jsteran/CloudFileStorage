@@ -6,7 +6,7 @@ import jakarta.validation.ConstraintValidatorContext;
 import java.util.regex.Pattern;
 
 public class ResourcePathValidator implements ConstraintValidator<ValidPath, String> {
-    public final static Pattern PATH_VALIDATION_PATTERN = Pattern.compile("^(|(/)?([a-zA-Z0-9_. -]+(?:/[a-zA-Z0-9_. -]+)*)(/)?)$");
+    public final static Pattern PATH_VALIDATION_PATTERN = Pattern.compile("^(|(/)?([a-zA-Z0-9_. ()-]+(?:/[a-zA-Z0-9_. ()-]+)*)(/)?)$");
 
     @Override
     public boolean isValid(String path, ConstraintValidatorContext constraintValidatorContext) {
