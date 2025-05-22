@@ -5,9 +5,11 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.util.List;
 
@@ -36,6 +38,14 @@ public class GlobalExceptionHandler {
 
         String message = "There is a validation error. " + String.join(", ", errors);
         return new ErrorMessage(message);
+    }
+
+    @ExceptionHandler({
+            MissingServletRequestParameterException.class,
+            MissingServletRequestPartException.class})
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorMessage handleMissingServletRequestParameterException(Exception e) {
+        return new ErrorMessage("One or more required parameters are missing" + e);
     }
 
     @ExceptionHandler(ConstraintViolationException.class)

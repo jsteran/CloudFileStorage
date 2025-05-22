@@ -1,7 +1,18 @@
 package dev.anton_kulakov;
 
+import dev.anton_kulakov.exception.MinioException;
+import io.minio.ListObjectsArgs;
+import io.minio.MinioClient;
+import io.minio.RemoveObjectsArgs;
+import io.minio.Result;
+import io.minio.messages.DeleteError;
+import io.minio.messages.DeleteObject;
+import io.minio.messages.Item;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -15,6 +26,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Testcontainers
 @SpringBootTest
@@ -23,8 +37,14 @@ import java.time.Duration;
 public class BaseIntegrationTest {
     private static final String MINIO_ACCESS_KEY = "minioadmin";
     private static final String MINIO_SECRET_KEY = "minioadmin";
+
+    @Value("${minio.bucket-name}")
+    private static final String testBucketName = "minioadmin";
     private static GenericContainer<?> minio;
     private static String minioUrl;
+
+    @Autowired
+    private MinioClient minioClient;
 
     @Container
     private static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(DockerImageName.parse("postgres:latest"));
@@ -58,7 +78,43 @@ public class BaseIntegrationTest {
         registry.add("minio.endpoint", () -> minioUrl);
         registry.add("minio.access-key", () -> MINIO_ACCESS_KEY);
         registry.add("minio.secret-key", () -> MINIO_SECRET_KEY);
-        registry.add("minio.bucket-name", () -> "test-bucket-name");
+        registry.add("minio.bucket-name", () -> testBucketName);
+    }
+
+    @BeforeEach
+    void cleanUpFileStorage() {
+        List<String> resourcesNames = new ArrayList<>();
+
+        Iterable<Result<Item>> resources = minioClient.listObjects(ListObjectsArgs.builder()
+                .bucket(testBucketName)
+                .recursive(true)
+                .build());
+
+        for (Result<Item> resource : resources) {
+            try {
+                resourcesNames.add(resource.get().objectName());
+            } catch (Exception e) {
+                throw new MinioException("Failed to list objects");
+            }
+        }
+
+        List<DeleteObject> resourcesToDelete = resourcesNames.stream()
+                .map(DeleteObject::new)
+                .collect(Collectors.toList());
+
+        Iterable<Result<DeleteError>> results = minioClient.removeObjects(RemoveObjectsArgs.builder()
+                .bucket(testBucketName)
+                .objects(resourcesToDelete)
+                .build());
+
+        for (Result<DeleteError> result : results) {
+            try {
+                DeleteError error = result.get();
+                System.err.println("Failed to delete: " + error.objectName() + " - " + error.message());
+            } catch (Exception e) {
+                throw new MinioException("Failed to process batch deletion result");
+            }
+        }
     }
 
     @AfterAll
