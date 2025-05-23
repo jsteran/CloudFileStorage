@@ -24,7 +24,6 @@ public class ResourceControllerTest extends BaseIntegrationTest {
         String fileName = "test-file.txt";
         String fileNameContent = "Text from test-file.txt";
         String uploadRequestPath = "/api/resource";
-        String getInfoUrl = "/api/resource?path=test-file.txt";
 
         MockMultipartFile testFile = new MockMultipartFile(
                 paramName,
@@ -37,9 +36,6 @@ public class ResourceControllerTest extends BaseIntegrationTest {
                         .file(testFile)
                         .param("path", ""))
                 .andExpect(status().isCreated());
-
-        mvc.perform(get(getInfoUrl))
-                .andExpect(status().isOk());
     }
 
     @SneakyThrows
@@ -51,7 +47,7 @@ public class ResourceControllerTest extends BaseIntegrationTest {
         String mainFolderFileName = "main-folder-file.txt";
         String mainFolderFileContent = "Text from main-folder-file.txt";
         String nestedFolderFileName = "nested-folder-file.txt";
-        String nestedFolderContent = "Text from nested-folder-file.txt";
+        String nestedFolderFileContent = "Text from nested-folder-file.txt";
         String mainFolderToUpload = "main_folder/";
         String nestedFolderToUpload = "main_folder/nested_folder/";
 
@@ -66,7 +62,7 @@ public class ResourceControllerTest extends BaseIntegrationTest {
                 paramName,
                 nestedFolderToUpload + nestedFolderFileName,
                 MediaType.TEXT_PLAIN_VALUE,
-                nestedFolderContent.getBytes()
+                nestedFolderFileContent.getBytes()
         );
 
         mvc.perform(multipart(uploadRequestPath)
@@ -154,17 +150,145 @@ public class ResourceControllerTest extends BaseIntegrationTest {
                 .andExpect(status().isConflict());
     }
 
-    // гетИнфо: запрос файла выдает код 200 ок
-    // гетИнфо: запрос папки выдает код 200 ок
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void getFileInfo_shouldReturnStatus200() {
+        String paramName = "object";
+        String fileName = "test-file.txt";
+        String fileNameContent = "Text from test-file.txt";
+        String uploadRequestPath = "/api/resource";
+        String getInfoUrl = "/api/resource?path=test-file.txt";
 
-    // гетИнфо: невалидный путь файла кидает ошибку и код 400
-    // гетИнфо: отсутствующий путь файла кидает ошибку и код 400
+        MockMultipartFile testFile = new MockMultipartFile(
+                paramName,
+                fileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                fileNameContent.getBytes()
+        );
 
-    // гетИнфо: невалидный путь папки кидает ошибку и код 400
-    // гетИнфо: отсутствующий путь папки кидает ошибку и код 400
+        mvc.perform(multipart(uploadRequestPath)
+                        .file(testFile)
+                        .param("path", ""));
 
-    // гетИнфо: отсутствие запрашиваемого файла кидает ошибку и код 404
-    // гетИнфо: отсутствие запрашиваемого папки кидает ошибку и код 404
+        mvc.perform(get(getInfoUrl))
+                .andExpect(status().isOk());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void getFolderInfo_shouldReturnStatus200() {
+        String paramName = "object";
+        String uploadRequestPath = "/api/resource";
+        String mainFolderFileName = "main-folder-file.txt";
+        String mainFolderFileContent = "Text from main-folder-file.txt";
+        String nestedFolderFileName = "nested-folder-file.txt";
+        String nestedFolderContent = "Text from nested-folder-file.txt";
+        String mainFolderToUpload = "main_folder/";
+        String nestedFolderToUpload = "/main_folder/nested_folder/";
+        String getInfoUrl = "/api/resource?path=" + nestedFolderToUpload;
+
+        MockMultipartFile mainFolderFile = new MockMultipartFile(
+                paramName,
+                mainFolderToUpload + mainFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                mainFolderFileContent.getBytes()
+        );
+
+        MockMultipartFile nestedFolderFile = new MockMultipartFile(
+                paramName,
+                nestedFolderToUpload + nestedFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                nestedFolderContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                        .file(mainFolderFile)
+                        .file(nestedFolderFile)
+                        .param("path", mainFolderToUpload));
+
+        mvc.perform(get(getInfoUrl))
+                .andExpect(status().isOk());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void getFileInfo_withInvalidPathParam_shouldReturnStatus400() {
+        String paramName = "object";
+        String fileName = "test-file.txt";
+        String fileNameContent = "Text from test-file.txt";
+        String uploadRequestPath = "/api/resource";
+        String getInfoUrl = "/api/resource?path=%^^&test-file.txt";
+
+        MockMultipartFile testFile = new MockMultipartFile(
+                paramName,
+                fileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                fileNameContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                .file(testFile)
+                .param("path", ""));
+
+        mvc.perform(get(getInfoUrl))
+                .andExpect(status().isBadRequest());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void getFolderInfo_withInvalidPathParam_shouldReturnStatus400() {
+        String paramName = "object";
+        String uploadRequestPath = "/api/resource";
+        String mainFolderFileName = "main-folder-file.txt";
+        String mainFolderFileContent = "Text from main-folder-file.txt";
+        String nestedFolderFileName = "nested-folder-file.txt";
+        String nestedFolderContent = "Text from nested-folder-file.txt";
+        String mainFolderToUpload = "main_folder/";
+        String nestedFolderToUpload = "/main_folder/nested_folder/";
+        String getInfoUrl = "/api/resource?path=/" + mainFolderToUpload + "^^$))";
+
+        MockMultipartFile mainFolderFile = new MockMultipartFile(
+                paramName,
+                mainFolderToUpload + mainFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                mainFolderFileContent.getBytes()
+        );
+
+        MockMultipartFile nestedFolderFile = new MockMultipartFile(
+                paramName,
+                nestedFolderToUpload + nestedFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                nestedFolderContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                        .file(mainFolderFile)
+                        .file(nestedFolderFile)
+                        .param("path", mainFolderToUpload));
+
+        mvc.perform(get(getInfoUrl))
+                .andExpect(status().isBadRequest());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void getFileInfo_whenFileDoesNotExist_shouldReturnStatus404() {
+        mvc.perform(get("/api/resource?path=test-file.txt"))
+                .andExpect(status().isNotFound());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void getFolderInfo_whenFolderDoesNotExist_shouldReturnStatus404() {
+        mvc.perform(get("/api/resource?path=non_existent_folder/"))
+                .andExpect(status().isNotFound());
+    }
 
     // удаление: удаление файла выдает код 204 NO content без тела
     // удаление: удаление папки выдает код 204 NO content без тела
