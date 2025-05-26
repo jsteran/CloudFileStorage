@@ -7,9 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class ResourceControllerTest extends BaseIntegrationTest {
@@ -290,17 +290,219 @@ public class ResourceControllerTest extends BaseIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
-    // удаление: удаление файла выдает код 204 NO content без тела
-    // удаление: удаление папки выдает код 204 NO content без тела
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void deleteFile_shouldReturnStatus204() {
+        String paramName = "object";
+        String fileName = "test-file.txt";
+        String fileNameContent = "Text from test-file.txt";
+        String requestPath = "/api/resource";
+        String userRootFolder = "user-1-files/";
 
-    // удаление: невалидный путь файла кидает ошибку и код 400
-    // удаление: отсутствующий путь файла кидает ошибку и код 400
+        MockMultipartFile testFile = new MockMultipartFile(
+                paramName,
+                fileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                fileNameContent.getBytes()
+        );
 
-    // удаление: невалидный путь папки кидает ошибку и код 400
-    // удаление: отсутствующий путь папки кидает ошибку и код 400
+        mvc.perform(multipart(requestPath)
+                .file(testFile)
+                .param("path", ""));
 
-    // удаление: отсутствие файла кидает ошибку и код 404
-    // удаление: отсутствие папки кидает ошибку и код 404
+        mvc.perform(MockMvcRequestBuilders.delete(requestPath)
+                        .param("path", userRootFolder + fileName))
+                .andExpect(status().isNoContent());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void deleteFolder_shouldReturnStatus204() {
+        String paramName = "object";
+        String uploadRequestPath = "/api/resource";
+        String mainFolderFileName = "main-folder-file.txt";
+        String mainFolderFileContent = "Text from main-folder-file.txt";
+        String nestedFolderFileName = "nested-folder-file.txt";
+        String nestedFolderFileContent = "Text from nested-folder-file.txt";
+        String mainFolderToUpload = "main_folder/";
+        String nestedFolderToUpload = "main_folder/nested_folder/";
+        String userRootFolder = "user-1-files/";
+
+        MockMultipartFile mainFolderFile = new MockMultipartFile(
+                paramName,
+                mainFolderToUpload + mainFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                mainFolderFileContent.getBytes()
+        );
+
+        MockMultipartFile nestedFolderFile = new MockMultipartFile(
+                paramName,
+                nestedFolderToUpload + nestedFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                nestedFolderFileContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                        .file(mainFolderFile)
+                        .file(nestedFolderFile)
+                        .param("path", mainFolderToUpload));
+
+        mvc.perform(MockMvcRequestBuilders.delete(uploadRequestPath)
+                .param("path", userRootFolder + mainFolderToUpload))
+                .andExpect(status().isNoContent());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void deleteFile_withEmptyPath_shouldReturnStatus400() {
+        String paramName = "object";
+        String fileName = "test-file.txt";
+        String fileNameContent = "Text from test-file.txt";
+        String requestPath = "/api/resource";
+
+        MockMultipartFile testFile = new MockMultipartFile(
+                paramName,
+                fileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                fileNameContent.getBytes()
+        );
+
+        mvc.perform(multipart(requestPath)
+                        .file(testFile)
+                        .param("path", ""));
+
+        mvc.perform(MockMvcRequestBuilders.delete(requestPath))
+                .andExpect(status().isBadRequest());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void deleteFile_withInvalidPath_shouldReturnStatus400() {
+        String paramName = "object";
+        String fileName = "test-file.txt";
+        String fileNameContent = "Text from test-file.txt";
+        String requestPath = "/api/resource";
+        String userRootFolder = "user-1-files/";
+
+        MockMultipartFile testFile = new MockMultipartFile(
+                paramName,
+                fileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                fileNameContent.getBytes()
+        );
+
+        mvc.perform(multipart(requestPath)
+                .file(testFile)
+                .param("path", ""));
+
+        mvc.perform(MockMvcRequestBuilders.delete(requestPath)
+                        .param("path", userRootFolder + fileName + "%$##&"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void deleteFolder_withEmptyPath_shouldReturnStatus400() {
+        String paramName = "object";
+        String uploadRequestPath = "/api/resource";
+        String mainFolderFileName = "main-folder-file.txt";
+        String mainFolderFileContent = "Text from main-folder-file.txt";
+        String nestedFolderFileName = "nested-folder-file.txt";
+        String nestedFolderFileContent = "Text from nested-folder-file.txt";
+        String mainFolderToUpload = "main_folder/";
+        String nestedFolderToUpload = "main_folder/nested_folder/";
+
+        MockMultipartFile mainFolderFile = new MockMultipartFile(
+                paramName,
+                mainFolderToUpload + mainFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                mainFolderFileContent.getBytes()
+        );
+
+        MockMultipartFile nestedFolderFile = new MockMultipartFile(
+                paramName,
+                nestedFolderToUpload + nestedFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                nestedFolderFileContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                .file(mainFolderFile)
+                .file(nestedFolderFile)
+                .param("path", mainFolderToUpload));
+
+        mvc.perform(MockMvcRequestBuilders.delete(uploadRequestPath))
+                .andExpect(status().isBadRequest());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void deleteFolder_withInvalidPath_shouldReturnStatus204() {
+        String paramName = "object";
+        String uploadRequestPath = "/api/resource";
+        String mainFolderFileName = "main-folder-file.txt";
+        String mainFolderFileContent = "Text from main-folder-file.txt";
+        String nestedFolderFileName = "nested-folder-file.txt";
+        String nestedFolderFileContent = "Text from nested-folder-file.txt";
+        String mainFolderToUpload = "main_folder/";
+        String nestedFolderToUpload = "main_folder/nested_folder/";
+        String userRootFolder = "user-1-files/";
+
+        MockMultipartFile mainFolderFile = new MockMultipartFile(
+                paramName,
+                mainFolderToUpload + mainFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                mainFolderFileContent.getBytes()
+        );
+
+        MockMultipartFile nestedFolderFile = new MockMultipartFile(
+                paramName,
+                nestedFolderToUpload + nestedFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                nestedFolderFileContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                .file(mainFolderFile)
+                .file(nestedFolderFile)
+                .param("path", mainFolderToUpload));
+
+        mvc.perform(MockMvcRequestBuilders.delete(uploadRequestPath)
+                        .param("path", userRootFolder + "%$##&" + mainFolderToUpload))
+                .andExpect(status().isBadRequest());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void deleteFile_whenFileDoesNotExist_shouldReturnStatus404() {
+        String requestPath = "/api/resource";
+        String userRootFolder = "user-1-files/";
+        String fileName = "test-file.txt";
+
+        mvc.perform(MockMvcRequestBuilders.delete(requestPath)
+                        .param("path", userRootFolder + fileName))
+                .andExpect(status().isNotFound());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void deleteFolder_whenFolderDoesNotExist_shouldReturnStatus204() {
+        String uploadRequestPath = "/api/resource";
+        String userRootFolder = "user-1-files/";
+        String mainFolderToUpload = "main_folder/";
+
+        mvc.perform(MockMvcRequestBuilders.delete(uploadRequestPath)
+                        .param("path", userRootFolder + mainFolderToUpload))
+                .andExpect(status().isNotFound());
+    }
 
     // скачивание: скач файла дает 200 ок и бинарное содержимое
     // скачивание: скач папки дает 200 ок и бинарное содержимое
