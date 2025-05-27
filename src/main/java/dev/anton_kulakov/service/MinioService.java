@@ -16,7 +16,6 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Consumer;
 
 @Service
 @RequiredArgsConstructor
@@ -118,14 +117,14 @@ public class MinioService {
         }
     }
 
-    public void streamFile(String fileName, Consumer<InputStream> streamConsumer) {
-        try (InputStream inputStream = minioClient.getObject(GetObjectArgs.builder()
-                .bucket(bucketName)
-                .object(fileName)
-                .build())) {
-            streamConsumer.accept(inputStream);
+    public InputStream getObject(String resourceName) {
+        try {
+            return minioClient.getObject(GetObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(resourceName)
+                    .build());
         } catch (Exception e) {
-            throw new MinioException("Failed to stream file");
+            throw new MinioException("Failed to get input stream");
         }
     }
 

@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.zip.ZipEntry;
@@ -39,7 +40,10 @@ public class FolderStreamingResponseBody implements StreamingResponseBody {
 
         try {
             zipOut.putNextEntry(new ZipEntry(entryName));
-            minioService.streamFile(fullResourceName, inputStream -> streamCopier.copyStream(inputStream, zipOut, bufferSize));
+
+            try (InputStream inputStream = minioService.getObject(fullResourceName)) {
+                streamCopier.copyStream(inputStream, zipOut, bufferSize);
+            }
         } catch (IOException e) {
             throw new BaseAppException("Failed to add resource to ZIP: %s".formatted(fullResourceName));
         }

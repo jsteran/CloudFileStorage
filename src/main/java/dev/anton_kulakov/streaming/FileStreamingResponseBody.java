@@ -1,10 +1,13 @@
 package dev.anton_kulakov.streaming;
 
+import dev.anton_kulakov.exception.BaseAppException;
 import dev.anton_kulakov.service.MinioService;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 
 @RequiredArgsConstructor
@@ -15,9 +18,11 @@ public class FileStreamingResponseBody implements StreamingResponseBody {
 
     @Override
     public void writeTo(@NotNull OutputStream outputStream) {
-        int bufferSize = 1024;
-
-        minioService.streamFile(resourceName, inputStream ->
-                streamCopier.copyStream(inputStream, outputStream, bufferSize));
+        try (InputStream inputStream = minioService.getObject(resourceName)) {
+            int bufferSize = 1024;
+            streamCopier.copyStream(inputStream, outputStream, bufferSize);
+        } catch (IOException e) {
+            throw new BaseAppException("Failed to stream file: " + resourceName);
+        }
     }
 }
