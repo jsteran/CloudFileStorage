@@ -10,6 +10,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 public class ResourceControllerTest extends BaseIntegrationTest {
@@ -168,8 +169,8 @@ public class ResourceControllerTest extends BaseIntegrationTest {
         );
 
         mvc.perform(multipart(uploadRequestPath)
-                        .file(testFile)
-                        .param("path", ""));
+                .file(testFile)
+                .param("path", ""));
 
         mvc.perform(get(getInfoUrl))
                 .andExpect(status().isOk());
@@ -204,9 +205,9 @@ public class ResourceControllerTest extends BaseIntegrationTest {
         );
 
         mvc.perform(multipart(uploadRequestPath)
-                        .file(mainFolderFile)
-                        .file(nestedFolderFile)
-                        .param("path", mainFolderToUpload));
+                .file(mainFolderFile)
+                .file(nestedFolderFile)
+                .param("path", mainFolderToUpload));
 
         mvc.perform(get(getInfoUrl))
                 .andExpect(status().isOk());
@@ -266,9 +267,9 @@ public class ResourceControllerTest extends BaseIntegrationTest {
         );
 
         mvc.perform(multipart(uploadRequestPath)
-                        .file(mainFolderFile)
-                        .file(nestedFolderFile)
-                        .param("path", mainFolderToUpload));
+                .file(mainFolderFile)
+                .file(nestedFolderFile)
+                .param("path", mainFolderToUpload));
 
         mvc.perform(get(getInfoUrl))
                 .andExpect(status().isBadRequest());
@@ -345,12 +346,12 @@ public class ResourceControllerTest extends BaseIntegrationTest {
         );
 
         mvc.perform(multipart(uploadRequestPath)
-                        .file(mainFolderFile)
-                        .file(nestedFolderFile)
-                        .param("path", mainFolderToUpload));
+                .file(mainFolderFile)
+                .file(nestedFolderFile)
+                .param("path", mainFolderToUpload));
 
         mvc.perform(MockMvcRequestBuilders.delete(uploadRequestPath)
-                .param("path", userRootFolder + mainFolderToUpload))
+                        .param("path", userRootFolder + mainFolderToUpload))
                 .andExpect(status().isNoContent());
     }
 
@@ -371,8 +372,8 @@ public class ResourceControllerTest extends BaseIntegrationTest {
         );
 
         mvc.perform(multipart(requestPath)
-                        .file(testFile)
-                        .param("path", ""));
+                .file(testFile)
+                .param("path", ""));
 
         mvc.perform(MockMvcRequestBuilders.delete(requestPath))
                 .andExpect(status().isBadRequest());
@@ -504,15 +505,222 @@ public class ResourceControllerTest extends BaseIntegrationTest {
                 .andExpect(status().isNotFound());
     }
 
-    // скачивание: скач файла дает 200 ок и бинарное содержимое
-    // скачивание: скач папки дает 200 ок и бинарное содержимое
-    // скачивание: скач ПУСТОЙ папки тоже дает 200 ок и пустой zip
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void downloadFile_shouldReturnStatus200() {
+        String paramName = "object";
+        String fileName = System.currentTimeMillis() + "-test-file.txt";
+        String fileContent = "Text from " + fileName;
+        String uploadRequestPath = "/api/resource";
+        String downloadEndpoint = "/api/resource/download";
+        String downloadPath = "user-1-files/" + fileName;
 
-    // скачивание: невалидный путь файла кидает ошибку и код 400
-    // скачивание: отсутствующий путь файла кидает ошибку и код 400
+        MockMultipartFile testFile = new MockMultipartFile(
+                paramName,
+                fileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                fileContent.getBytes()
+        );
 
-    // скачивание: невалидный путь папки кидает ошибку и код 400
+        mvc.perform(multipart(uploadRequestPath)
+                .file(testFile)
+                .param("path", ""));
+
+        mvc.perform(get(downloadEndpoint)
+                        .param("path", downloadPath))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM));
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void downloadFolder_shouldReturnStatus200() {
+        String paramName = "object";
+        String uploadRequestPath = "/api/resource";
+        String mainFolderFileName = System.currentTimeMillis() + "-main-folder-file.txt";
+        String mainFolderFileContent = "Text from " + mainFolderFileName;
+        String nestedFolderFileName = System.currentTimeMillis() + "-nested-folder-file.txt";
+        String nestedFolderFileContent = "Text from " + nestedFolderFileName;
+        String mainFolderToUpload = "main_folder/";
+        String nestedFolderToUpload = "main_folder/nested_folder/";
+        String downloadEndpoint = "/api/resource/download";
+        String downloadPath = "user-1-files/" + mainFolderToUpload;
+
+        MockMultipartFile mainFolderFile = new MockMultipartFile(
+                paramName,
+                mainFolderToUpload + mainFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                mainFolderFileContent.getBytes()
+        );
+
+        MockMultipartFile nestedFolderFile = new MockMultipartFile(
+                paramName,
+                nestedFolderToUpload + nestedFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                nestedFolderFileContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                .file(mainFolderFile)
+                .file(nestedFolderFile)
+                .param("path", mainFolderToUpload));
+
+        mvc.perform(get(downloadEndpoint)
+                        .param("path", downloadPath))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/zip"));
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void downloadEmptyFolder_ShouldReturnStatus200() {
+        String createEmptyFolderEndpoint = "/api/directory";
+        String downloadEndpoint = "/api/resource/download";
+        String emptyFolderName = "new_empty_folder/";
+        String downloadPath = "user-1-files/" + emptyFolderName;
+
+        mvc.perform(post(createEmptyFolderEndpoint)
+                .param("path", emptyFolderName));
+
+        mvc.perform(get(downloadEndpoint)
+                        .param("path", downloadPath))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/zip"));
+    }
+
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void downloadFile_withEmptyPath_shouldReturnStatus400() {
+        String paramName = "object";
+        String fileName = System.currentTimeMillis() + "-test-file.txt";
+        String fileContent = "Text from " + fileName;
+        String uploadRequestPath = "/api/resource";
+        String downloadEndpoint = "/api/resource/download";
+
+        MockMultipartFile testFile = new MockMultipartFile(
+                paramName,
+                fileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                fileContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                .file(testFile)
+                .param("path", ""));
+
+        mvc.perform(get(downloadEndpoint))
+                .andExpect(status().isBadRequest());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void downloadFile_withInvalidPath_shouldReturnStatus400() {
+        String paramName = "object";
+        String fileName = System.currentTimeMillis() + "-test-file.txt";
+        String fileContent = "Text from " + fileName;
+        String uploadRequestPath = "/api/resource";
+        String downloadEndpoint = "/api/resource/download";
+        String downloadPath = "user-1-files/" + fileName + "%%^&^))";
+
+        MockMultipartFile testFile = new MockMultipartFile(
+                paramName,
+                fileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                fileContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                .file(testFile)
+                .param("path", ""));
+
+        mvc.perform(get(downloadEndpoint)
+                        .param("path", downloadPath))
+                .andExpect(status().isBadRequest());
+    }
+
+
     // скачивание: отсутствующий путь папки кидает ошибку и код 400
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void downloadFolder_withEmptyPath_shouldReturnStatus400() {
+        String paramName = "object";
+        String uploadRequestPath = "/api/resource";
+        String mainFolderFileName = System.currentTimeMillis() + "-main-folder-file.txt";
+        String mainFolderFileContent = "Text from " + mainFolderFileName;
+        String nestedFolderFileName = System.currentTimeMillis() + "-nested-folder-file.txt";
+        String nestedFolderFileContent = "Text from " + nestedFolderFileName;
+        String mainFolderToUpload = "main_folder/";
+        String nestedFolderToUpload = "main_folder/nested_folder/";
+        String downloadEndpoint = "/api/resource/download";
+
+        MockMultipartFile mainFolderFile = new MockMultipartFile(
+                paramName,
+                mainFolderToUpload + mainFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                mainFolderFileContent.getBytes()
+        );
+
+        MockMultipartFile nestedFolderFile = new MockMultipartFile(
+                paramName,
+                nestedFolderToUpload + nestedFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                nestedFolderFileContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                .file(mainFolderFile)
+                .file(nestedFolderFile)
+                .param("path", mainFolderToUpload));
+
+        mvc.perform(get(downloadEndpoint))
+                .andExpect(status().isBadRequest());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void downloadFolder_withInvalidPath_shouldReturnStatus400() {
+        String paramName = "object";
+        String uploadRequestPath = "/api/resource";
+        String mainFolderFileName = System.currentTimeMillis() + "-main-folder-file.txt";
+        String mainFolderFileContent = "Text from " + mainFolderFileName;
+        String nestedFolderFileName = System.currentTimeMillis() + "-nested-folder-file.txt";
+        String nestedFolderFileContent = "Text from " + nestedFolderFileName;
+        String mainFolderToUpload = "main_folder/";
+        String nestedFolderToUpload = "main_folder/nested_folder/";
+        String downloadEndpoint = "/api/resource/download";
+        String downloadPath = "user-1-files/" + "%%^&^))" + mainFolderToUpload;
+
+        MockMultipartFile mainFolderFile = new MockMultipartFile(
+                paramName,
+                mainFolderToUpload + mainFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                mainFolderFileContent.getBytes()
+        );
+
+        MockMultipartFile nestedFolderFile = new MockMultipartFile(
+                paramName,
+                nestedFolderToUpload + nestedFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                nestedFolderFileContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                .file(mainFolderFile)
+                .file(nestedFolderFile)
+                .param("path", mainFolderToUpload));
+
+        mvc.perform(get(downloadEndpoint)
+                        .param("path", downloadPath))
+                .andExpect(status().isBadRequest());
+    }
 
     // move rename: файла приводит к коду 200 ок
     // move rename: папки приводит к коду 200 ок

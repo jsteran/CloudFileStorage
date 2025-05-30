@@ -215,9 +215,16 @@ public class ResourceController {
     })
     @GetMapping("/api/resource/download")
     public ResponseEntity<StreamingResponseBody> download(
+            @AuthenticationPrincipal SecurityUser securityUser,
             @ValidPath
             @RequestParam
             @Parameter(description = "The path to the folder or file you want to download", example = "folder/file.txt") String path) {
+        String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
+
+        if (!path.contains(userRootFolder)) {
+            path = userRootFolder + path;
+        }
+
         resourceHandlerFactory.getResourceHandler(path).getInfo(path);
         return ResponseEntity.ok()
                 .contentType(streamingResponseFactory.getContentType(path))

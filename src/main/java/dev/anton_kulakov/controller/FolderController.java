@@ -242,7 +242,7 @@ public class FolderController {
         String newFolderName = pathProcessor.getLastFolderName(fullPath);
         String parentFolderPath = pathProcessor.getPathWithoutLastFolder(fullPath, newFolderName);
 
-        if (!minioService.isFolderExists(parentFolderPath)) {
+        if (!parentFolderPath.equals(userRootFolder) && !minioService.isFolderExists(parentFolderPath)) {
             throw new ResourceNotFoundException("The parent folder doesn't exists");
         }
 
