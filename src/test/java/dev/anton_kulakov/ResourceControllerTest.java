@@ -722,20 +722,622 @@ public class ResourceControllerTest extends BaseIntegrationTest {
                 .andExpect(status().isBadRequest());
     }
 
-    // move rename: файла приводит к коду 200 ок
-    // move rename: папки приводит к коду 200 ок
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void moveFile_shouldReturnStatus200() {
+        String paramName = "object";
+        String fileName = System.currentTimeMillis() + "-test-file.txt";
+        String fileContent = "Text from " + fileName;
+        String uploadRequestPath = "/api/resource";
+        String moveEndpoint = "/api/resource/move";
+        String fromPath = "user-1-files/" + fileName;
+        String toPath = "user-1-files/" + "new folder" + fileName;
 
-    // move rename: невалидный путь файла кидает ошибку и код 400
-    // move rename: отсутствующий путь файла кидает ошибку и код 400
+        MockMultipartFile testFile = new MockMultipartFile(
+                paramName,
+                fileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                fileContent.getBytes()
+        );
 
-    // move rename: невалидный путь папки кидает ошибку и код 400
-    // move rename: отсутствующий путь папки кидает ошибку и код 400
+        mvc.perform(multipart(uploadRequestPath)
+                .file(testFile)
+                .param("path", ""));
 
-    // move rename: отсутствие файла кидает ошибку и код 404
-    // move rename: отсутствие папки кидает ошибку и код 404
+        mvc.perform(get(moveEndpoint)
+                        .param("from", fromPath)
+                        .param("to", toPath))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE));
+    }
 
-    // move rename: наличие уже файла кидает ошибку и код 409
-    // move rename: наличие уже папки кидает ошибку и код 409
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void renameFile_shouldReturnStatus200() {
+        String paramName = "object";
+        String fileName = System.currentTimeMillis() + "-test-file.txt";
+        String fileContent = "Text from " + fileName;
+        String uploadRequestPath = "/api/resource";
+        String moveEndpoint = "/api/resource/move";
+        String fromPath = "user-1-files/" + fileName;
+        String toPath = "user-1-files/" + System.currentTimeMillis() + "new" + fileName;
+
+        MockMultipartFile testFile = new MockMultipartFile(
+                paramName,
+                fileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                fileContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                .file(testFile)
+                .param("path", ""));
+
+        mvc.perform(get(moveEndpoint)
+                        .param("from", fromPath)
+                        .param("to", toPath))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE));
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void moveFolder_shouldReturnStatus200() {
+        String paramName = "object";
+        String uploadRequestPath = "/api/resource";
+        String mainFolderFileName = System.currentTimeMillis() + "-main-folder-file.txt";
+        String mainFolderFileContent = "Text from " + mainFolderFileName;
+        String nestedFolderFileName = System.currentTimeMillis() + "-nested-folder-file.txt";
+        String nestedFolderFileContent = "Text from " + nestedFolderFileName;
+        String mainFolderToUpload = "main_folder/";
+        String nestedFolderToUpload = "main_folder/nested_folder/";
+        String moveEndpoint = "/api/resource/move";
+        String fromPath = "user-1-files/" + mainFolderToUpload + nestedFolderToUpload;
+        String toPath = "user-1-files/" + nestedFolderToUpload;
+
+        MockMultipartFile mainFolderFile = new MockMultipartFile(
+                paramName,
+                mainFolderToUpload + mainFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                mainFolderFileContent.getBytes()
+        );
+
+        MockMultipartFile nestedFolderFile = new MockMultipartFile(
+                paramName,
+                nestedFolderToUpload + nestedFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                nestedFolderFileContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                .file(mainFolderFile)
+                .file(nestedFolderFile)
+                .param("path", mainFolderToUpload));
+
+        mvc.perform(get(moveEndpoint)
+                        .param("from", fromPath)
+                        .param("to", toPath))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE));
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void renameFolder_shouldReturnStatus200() {
+        String paramName = "object";
+        String uploadRequestPath = "/api/resource";
+        String mainFolderFileName = System.currentTimeMillis() + "-main-folder-file.txt";
+        String mainFolderFileContent = "Text from " + mainFolderFileName;
+        String nestedFolderFileName = System.currentTimeMillis() + "-nested-folder-file.txt";
+        String nestedFolderFileContent = "Text from " + nestedFolderFileName;
+        String mainFolderToUpload = "main_folder/";
+        String nestedFolderToUpload = "main_folder/nested_folder/";
+        String moveEndpoint = "/api/resource/move";
+        String fromPath = "user-1-files/" + mainFolderToUpload;
+        String toPath = "user-1-files/" + "new main folder";
+
+        MockMultipartFile mainFolderFile = new MockMultipartFile(
+                paramName,
+                mainFolderToUpload + mainFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                mainFolderFileContent.getBytes()
+        );
+
+        MockMultipartFile nestedFolderFile = new MockMultipartFile(
+                paramName,
+                nestedFolderToUpload + nestedFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                nestedFolderFileContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                .file(mainFolderFile)
+                .file(nestedFolderFile)
+                .param("path", mainFolderToUpload));
+
+        mvc.perform(get(moveEndpoint)
+                        .param("from", fromPath)
+                        .param("to", toPath))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE));
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void renameFile_withEmptyFromPath_shouldReturnStatus400() {
+        String paramName = "object";
+        String fileName = System.currentTimeMillis() + "-test-file.txt";
+        String fileContent = "Text from " + fileName;
+        String uploadRequestPath = "/api/resource";
+        String moveEndpoint = "/api/resource/move";
+        String toPath = "user-1-files/" + System.currentTimeMillis() + "new" + fileName;
+
+        MockMultipartFile testFile = new MockMultipartFile(
+                paramName,
+                fileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                fileContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                .file(testFile)
+                .param("path", ""));
+
+        mvc.perform(get(moveEndpoint)
+                        .param("to", toPath))
+                .andExpect(status().isBadRequest());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void renameFile_withEmptyToPath_shouldReturnStatus400() {
+        String paramName = "object";
+        String fileName = System.currentTimeMillis() + "-test-file.txt";
+        String fileContent = "Text from " + fileName;
+        String uploadRequestPath = "/api/resource";
+        String moveEndpoint = "/api/resource/move";
+        String fromPath = "user-1-files/" + fileName;
+
+        MockMultipartFile testFile = new MockMultipartFile(
+                paramName,
+                fileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                fileContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                .file(testFile)
+                .param("path", ""));
+
+        mvc.perform(get(moveEndpoint)
+                        .param("from", fromPath))
+                .andExpect(status().isBadRequest());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void renameFile_withInvalidFromPath_shouldReturnStatus400() {
+        String paramName = "object";
+        String fileName = System.currentTimeMillis() + "-test-file.txt";
+        String fileContent = "Text from " + fileName;
+        String uploadRequestPath = "/api/resource";
+        String moveEndpoint = "/api/resource/move";
+        String fromPath = "user-1-files/" + "^%$#@" + fileName;
+        String toPath = "user-1-files/" + System.currentTimeMillis() + "new" + fileName;
+
+        MockMultipartFile testFile = new MockMultipartFile(
+                paramName,
+                fileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                fileContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                .file(testFile)
+                .param("path", ""));
+
+        mvc.perform(get(moveEndpoint)
+                        .param("from", fromPath)
+                        .param("to", toPath))
+                .andExpect(status().isBadRequest());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void renameFile_withInvalidToPath_shouldReturnStatus400() {
+        String paramName = "object";
+        String fileName = System.currentTimeMillis() + "-test-file.txt";
+        String fileContent = "Text from " + fileName;
+        String uploadRequestPath = "/api/resource";
+        String moveEndpoint = "/api/resource/move";
+        String fromPath = "user-1-files/" + fileName;
+        String toPath = "user-1-files/" + System.currentTimeMillis() + "^%$#@" + fileName;
+
+        MockMultipartFile testFile = new MockMultipartFile(
+                paramName,
+                fileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                fileContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                .file(testFile)
+                .param("path", ""));
+
+        mvc.perform(get(moveEndpoint)
+                        .param("from", fromPath)
+                        .param("to", toPath))
+                .andExpect(status().isBadRequest());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void renameFolder_withEmptyFromPath_shouldReturnStatus400() {
+        String paramName = "object";
+        String uploadRequestPath = "/api/resource";
+        String mainFolderFileName = System.currentTimeMillis() + "-main-folder-file.txt";
+        String mainFolderFileContent = "Text from " + mainFolderFileName;
+        String nestedFolderFileName = System.currentTimeMillis() + "-nested-folder-file.txt";
+        String nestedFolderFileContent = "Text from " + nestedFolderFileName;
+        String mainFolderToUpload = "main_folder/";
+        String nestedFolderToUpload = "main_folder/nested_folder/";
+        String moveEndpoint = "/api/resource/move";
+        String toPath = "user-1-files/" + "new main folder";
+
+        MockMultipartFile mainFolderFile = new MockMultipartFile(
+                paramName,
+                mainFolderToUpload + mainFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                mainFolderFileContent.getBytes()
+        );
+
+        MockMultipartFile nestedFolderFile = new MockMultipartFile(
+                paramName,
+                nestedFolderToUpload + nestedFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                nestedFolderFileContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                .file(mainFolderFile)
+                .file(nestedFolderFile)
+                .param("path", mainFolderToUpload));
+
+        mvc.perform(get(moveEndpoint)
+                        .param("to", toPath))
+                .andExpect(status().isBadRequest());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void renameFolder_withEmptyToPath_shouldReturnStatus400() {
+        String paramName = "object";
+        String uploadRequestPath = "/api/resource";
+        String mainFolderFileName = System.currentTimeMillis() + "-main-folder-file.txt";
+        String mainFolderFileContent = "Text from " + mainFolderFileName;
+        String nestedFolderFileName = System.currentTimeMillis() + "-nested-folder-file.txt";
+        String nestedFolderFileContent = "Text from " + nestedFolderFileName;
+        String mainFolderToUpload = "main_folder/";
+        String nestedFolderToUpload = "main_folder/nested_folder/";
+        String moveEndpoint = "/api/resource/move";
+        String fromPath = "user-1-files/" + mainFolderToUpload;
+
+        MockMultipartFile mainFolderFile = new MockMultipartFile(
+                paramName,
+                mainFolderToUpload + mainFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                mainFolderFileContent.getBytes()
+        );
+
+        MockMultipartFile nestedFolderFile = new MockMultipartFile(
+                paramName,
+                nestedFolderToUpload + nestedFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                nestedFolderFileContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                .file(mainFolderFile)
+                .file(nestedFolderFile)
+                .param("path", mainFolderToUpload));
+
+        mvc.perform(get(moveEndpoint)
+                        .param("from", fromPath))
+                .andExpect(status().isBadRequest());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void renameFolder_withInvalidFromPath_shouldReturnStatus400() {
+        String paramName = "object";
+        String uploadRequestPath = "/api/resource";
+        String mainFolderFileName = System.currentTimeMillis() + "-main-folder-file.txt";
+        String mainFolderFileContent = "Text from " + mainFolderFileName;
+        String nestedFolderFileName = System.currentTimeMillis() + "-nested-folder-file.txt";
+        String nestedFolderFileContent = "Text from " + nestedFolderFileName;
+        String mainFolderToUpload = "main_folder/";
+        String nestedFolderToUpload = "main_folder/nested_folder/";
+        String moveEndpoint = "/api/resource/move";
+        String fromPath = "user-1-files/" + "%^$#&" + mainFolderToUpload;
+        String toPath = "user-1-files/" + "new main folder";
+
+        MockMultipartFile mainFolderFile = new MockMultipartFile(
+                paramName,
+                mainFolderToUpload + mainFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                mainFolderFileContent.getBytes()
+        );
+
+        MockMultipartFile nestedFolderFile = new MockMultipartFile(
+                paramName,
+                nestedFolderToUpload + nestedFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                nestedFolderFileContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                .file(mainFolderFile)
+                .file(nestedFolderFile)
+                .param("path", mainFolderToUpload));
+
+        mvc.perform(get(moveEndpoint)
+                        .param("from", fromPath)
+                        .param("to", toPath))
+                .andExpect(status().isBadRequest());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void renameFolder_withInvalidToPath_shouldReturnStatus400() {
+        String paramName = "object";
+        String uploadRequestPath = "/api/resource";
+        String mainFolderFileName = System.currentTimeMillis() + "-main-folder-file.txt";
+        String mainFolderFileContent = "Text from " + mainFolderFileName;
+        String nestedFolderFileName = System.currentTimeMillis() + "-nested-folder-file.txt";
+        String nestedFolderFileContent = "Text from " + nestedFolderFileName;
+        String mainFolderToUpload = "main_folder/";
+        String nestedFolderToUpload = "main_folder/nested_folder/";
+        String moveEndpoint = "/api/resource/move";
+        String fromPath = "user-1-files/" + mainFolderToUpload;
+        String toPath = "user-1-files/" + "%^$#" + "new main folder";
+
+        MockMultipartFile mainFolderFile = new MockMultipartFile(
+                paramName,
+                mainFolderToUpload + mainFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                mainFolderFileContent.getBytes()
+        );
+
+        MockMultipartFile nestedFolderFile = new MockMultipartFile(
+                paramName,
+                nestedFolderToUpload + nestedFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                nestedFolderFileContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                .file(mainFolderFile)
+                .file(nestedFolderFile)
+                .param("path", mainFolderToUpload));
+
+        mvc.perform(get(moveEndpoint)
+                        .param("from", fromPath)
+                        .param("to", toPath))
+                .andExpect(status().isBadRequest());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void renameNonExistentFile_shouldReturnStatus404() {
+        String fileName = System.currentTimeMillis() + "-test-file.txt";
+        String moveEndpoint = "/api/resource/move";
+        String fromPath = "user-1-files/" + fileName;
+        String toPath = "user-1-files/" + System.currentTimeMillis() + "new" + fileName;
+
+
+        mvc.perform(get(moveEndpoint)
+                        .param("from", fromPath)
+                        .param("to", toPath))
+                .andExpect(status().isNotFound());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void renameNonExistentFolder_shouldReturnStatus404() {
+        String mainFolderToUpload = "main_folder/";
+        String moveEndpoint = "/api/resource/move";
+        String fromPath = "user-1-files/" + mainFolderToUpload;
+        String toPath = "user-1-files/" + "new main folder";
+
+        mvc.perform(get(moveEndpoint)
+                        .param("from", fromPath)
+                        .param("to", toPath))
+                .andExpect(status().isNotFound());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void renameFile_withAlreadyExistingName_shouldReturnStatus409() {
+        String paramName = "object";
+        String fileName = System.currentTimeMillis() + "-test-file.txt";
+        String existingFileName = "new" + fileName;
+        String fileContent = "Text from " + fileName;
+        String existingFileContent = "Text from " + existingFileName;
+        String uploadRequestPath = "/api/resource";
+        String moveEndpoint = "/api/resource/move";
+        String fromPath = "user-1-files/" + fileName;
+        String toPath = "user-1-files/" + "new" + fileName;
+
+        MockMultipartFile testFile = new MockMultipartFile(
+                paramName,
+                fileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                fileContent.getBytes()
+        );
+
+        MockMultipartFile existingFile = new MockMultipartFile(
+                paramName,
+                existingFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                existingFileContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                .file(testFile)
+                .file(existingFile)
+                .param("path", ""));
+
+        mvc.perform(get(moveEndpoint)
+                        .param("from", fromPath)
+                        .param("to", toPath))
+                .andExpect(status().isConflict());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void moveFile_withAlreadyExistingName_shouldReturnStatus409() {
+        String paramName = "object";
+        String fileName = System.currentTimeMillis() + "-test-file.txt";
+        String fileContent = "Text from " + fileName;
+        String uploadEndpoint = "/api/resource";
+        String alreadyExistingFilePath = "folder/";
+        String moveEndpoint = "/api/resource/move";
+        String fromPath = "user-1-files/" + fileName;
+        String toPath = "user-1-files/" + alreadyExistingFilePath + fileName;
+
+        MockMultipartFile testFile = new MockMultipartFile(
+                paramName,
+                fileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                fileContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadEndpoint)
+                .file(testFile)
+                .param("path", ""));
+
+        mvc.perform(multipart(uploadEndpoint)
+                .file(testFile)
+                .param("path", alreadyExistingFilePath));
+
+        mvc.perform(get(moveEndpoint)
+                        .param("from", fromPath)
+                        .param("to", toPath))
+                .andExpect(status().isConflict());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void renameFolder_withAlreadyExistingName_shouldReturnStatus409() {
+        String paramName = "object";
+        String uploadRequestPath = "/api/resource";
+        String mainFolderFileName = System.currentTimeMillis() + "-main-folder-file.txt";
+        String mainFolderFileContent = "Text from " + mainFolderFileName;
+        String nestedFolderFileName = System.currentTimeMillis() + "-nested-folder-file.txt";
+        String nestedFolderFileContent = "Text from " + nestedFolderFileName;
+        String mainFolderToUpload = "main_folder/";
+        String nestedFolderToUpload = "main_folder/nested_folder/";
+        String moveEndpoint = "/api/resource/move";
+        String fromPath = "user-1-files/" + mainFolderToUpload;
+        String toPath = "user-1-files/" + "new main folder";
+        String createNewFolderEndpoint = "/api/directory";
+
+        MockMultipartFile mainFolderFile = new MockMultipartFile(
+                paramName,
+                mainFolderToUpload + mainFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                mainFolderFileContent.getBytes()
+        );
+
+        MockMultipartFile nestedFolderFile = new MockMultipartFile(
+                paramName,
+                nestedFolderToUpload + nestedFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                nestedFolderFileContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                .file(mainFolderFile)
+                .file(nestedFolderFile)
+                .param("path", mainFolderToUpload));
+
+        mvc.perform(post(createNewFolderEndpoint)
+                .param("path", "new main folder/"));
+
+        mvc.perform(get(moveEndpoint)
+                        .param("from", fromPath)
+                        .param("to", toPath))
+                .andExpect(status().isConflict());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void moveFolder_withAlreadyExistingName_shouldReturnStatus409() {
+        String paramName = "object";
+        String uploadRequestPath = "/api/resource";
+        String mainFolderFileName = System.currentTimeMillis() + "-main-folder-file.txt";
+        String mainFolderFileContent = "Text from " + mainFolderFileName;
+        String nestedFolderFileName = System.currentTimeMillis() + "-nested-folder-file.txt";
+        String nestedFolderFileContent = "Text from " + nestedFolderFileName;
+        String mainFolderToUpload = "main_folder/";
+        String nestedFolderToUpload = "main_folder/nested_folder/";
+        String moveEndpoint = "/api/resource/move";
+        String fromPath = "user-1-files/" + nestedFolderToUpload;
+        String toPath = "user-1-files/" + "nested_folder/";
+        String createNewFolderEndpoint = "/api/directory";
+
+        MockMultipartFile mainFolderFile = new MockMultipartFile(
+                paramName,
+                mainFolderToUpload + mainFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                mainFolderFileContent.getBytes()
+        );
+
+        MockMultipartFile nestedFolderFile = new MockMultipartFile(
+                paramName,
+                nestedFolderToUpload + nestedFolderFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                nestedFolderFileContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                        .file(mainFolderFile)
+                        .file(nestedFolderFile)
+                        .param("path", ""))
+                .andExpect(status().isCreated());
+
+        mvc.perform(get("/api/resource?path=main_folder/"))
+                .andExpect(status().isOk());
+
+        mvc.perform(get("/api/resource?path=main_folder/nested_folder/"))
+                .andExpect(status().isOk());
+
+        mvc.perform(post(createNewFolderEndpoint)
+                .param("path", "nested_folder/"));
+
+        mvc.perform(get(moveEndpoint)
+                        .param("from", fromPath)
+                        .param("to", toPath))
+                .andExpect(status().isConflict());
+    }
 
     // поиск: файла дает код 200 ок
     // поиск: папки дает код 200 ок
