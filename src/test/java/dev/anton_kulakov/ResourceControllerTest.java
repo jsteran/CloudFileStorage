@@ -9,9 +9,12 @@ import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
+import java.util.List;
+
+import static org.hamcrest.Matchers.instanceOf;
+import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 public class ResourceControllerTest extends BaseIntegrationTest {
     @Autowired
@@ -1339,12 +1342,125 @@ public class ResourceControllerTest extends BaseIntegrationTest {
                 .andExpect(status().isConflict());
     }
 
-    // поиск: файла дает код 200 ок
-    // поиск: папки дает код 200 ок
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void searchFile_shouldReturnStatus200() {
+        String searchEndpoint = "/api/resource/search";
+        String paramName = "object";
+        String firstFileName = System.currentTimeMillis() + "-first-test-file.txt";
+        String secondFileName = System.currentTimeMillis() + "-second-test-file.txt";
+        String firstFileContent = "Text from " + firstFileName;
+        String secondFileContent = "Text from " + secondFileName;
+        String uploadRequestPath = "/api/resource";
+        String searchQuery = "first";
 
-    // поиск: невалидный запрос на файл кидает ошибку и код 400
-    // поиск: отсутствующий запрос на файл кидает ошибку и код 400
+        MockMultipartFile firstFile = new MockMultipartFile(
+                paramName,
+                firstFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                firstFileContent.getBytes()
+        );
 
-    // поиск: невалидный запрос на папку кидает ошибку и код 400
-    // поиск: отсутствующий запрос на папку кидает ошибку и код 400
+        MockMultipartFile secondFile = new MockMultipartFile(
+                paramName,
+                secondFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                secondFileContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                .file(firstFile)
+                .file(secondFile)
+                .param("path", ""));
+
+        mvc.perform(get(searchEndpoint)
+                        .param("query", searchQuery))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(jsonPath("$", instanceOf(List.class)))
+                .andExpect(jsonPath("$.length()", is(1)))
+                .andExpect(jsonPath("$[0].name", is(firstFileName)))
+                .andExpect(jsonPath("$[0].path", is("")))
+                .andExpect(jsonPath("$[0].size", is(firstFileContent.getBytes().length)))
+                .andExpect(jsonPath("$[0].type", is("FILE")));
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void searchFolder_shouldReturnStatus200() {
+        String searchEndpoint = "/api/resource/search";
+        String searchQuery = "nes";
+
+        String createEmptyFolderEndpoint = "/api/directory";
+
+        mvc.perform(post(createEmptyFolderEndpoint)
+                .param("path", "folder/"));
+
+        mvc.perform(post(createEmptyFolderEndpoint)
+                .param("path", "folder/nested folder/"));
+
+        mvc.perform(get(searchEndpoint)
+                        .param("query", searchQuery))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(jsonPath("$", instanceOf(List.class)))
+                .andExpect(jsonPath("$.length()", is(1)))
+                .andExpect(jsonPath("$[0].name", is("nested folder/")))
+                .andExpect(jsonPath("$[0].path", is("folder/nested folder/")))
+                .andExpect(jsonPath("$[0].type", is("DIRECTORY")));
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void searchFile_withEmptyQuery_shouldReturnStatus400() {
+        String searchEndpoint = "/api/resource/search";
+        String paramName = "object";
+        String firstFileName = System.currentTimeMillis() + "-first-test-file.txt";
+        String secondFileName = System.currentTimeMillis() + "-second-test-file.txt";
+        String firstFileContent = "Text from " + firstFileName;
+        String secondFileContent = "Text from " + secondFileName;
+        String uploadRequestPath = "/api/resource";
+
+        MockMultipartFile firstFile = new MockMultipartFile(
+                paramName,
+                firstFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                firstFileContent.getBytes()
+        );
+
+        MockMultipartFile secondFile = new MockMultipartFile(
+                paramName,
+                secondFileName,
+                MediaType.TEXT_PLAIN_VALUE,
+                secondFileContent.getBytes()
+        );
+
+        mvc.perform(multipart(uploadRequestPath)
+                .file(firstFile)
+                .file(secondFile)
+                .param("path", ""));
+
+        mvc.perform(get(searchEndpoint))
+                .andExpect(status().isBadRequest());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void searchFolder_withEmptyQuery_shouldReturnStatus200() {
+        String searchEndpoint = "/api/resource/search";
+        String createEmptyFolderEndpoint = "/api/directory";
+
+        mvc.perform(post(createEmptyFolderEndpoint)
+                .param("path", "folder/"));
+
+        mvc.perform(post(createEmptyFolderEndpoint)
+                .param("path", "folder/nested folder/"));
+
+        mvc.perform(get(searchEndpoint))
+                .andExpect(status().isBadRequest());
+    }
 }
