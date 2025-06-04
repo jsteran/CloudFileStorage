@@ -220,11 +220,7 @@ public class ResourceController {
             @RequestParam
             @Parameter(description = "The path to the folder or file you want to download", example = "folder/file.txt") String path) {
         String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
-
-        if (!path.contains(userRootFolder)) {
-            path = userRootFolder + path;
-        }
-
+        path = pathProcessor.getPathWithUserRootFolder(path, userRootFolder);
         resourceHandlerFactory.getResourceHandler(path).getInfo(path);
         return ResponseEntity.ok()
                 .contentType(streamingResponseFactory.getContentType(path))
@@ -307,9 +303,12 @@ public class ResourceController {
     })
     @DeleteMapping("/api/resource")
     public ResponseEntity<Void> delete(
+            @AuthenticationPrincipal SecurityUser securityUser,
             @ValidPath
             @RequestParam
             @Parameter(description = "The path to the folder or file that you want to delete", example = "folder/file.txt") String path) {
+        String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
+        path = pathProcessor.getPathWithUserRootFolder(path, userRootFolder);
         ResourceHandlerInterface resourceHandler = resourceHandlerFactory.getResourceHandler(path);
         resourceHandler.delete(path);
         return ResponseEntity.noContent().build();

@@ -3,10 +3,8 @@ package dev.anton_kulakov;
 import dev.anton_kulakov.config.WithMockCustomUser;
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import java.util.List;
@@ -16,28 +14,16 @@ import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-public class ResourceControllerTest extends BaseIntegrationTest {
-    @Autowired
-    private MockMvc mvc;
-
+public class ResourceControllerTest extends AbstractControllerIntegrationTest {
     @SneakyThrows
     @Test
     @WithMockCustomUser
     void uploadFile_shouldReturnStatus201() {
-        String paramName = "object";
-        String fileName = "test-file.txt";
-        String fileNameContent = "Text from test-file.txt";
         String uploadRequestPath = "/api/resource";
-
-        MockMultipartFile testFile = new MockMultipartFile(
-                paramName,
-                fileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                fileNameContent.getBytes()
-        );
+        MockMultipartFile file = createFile(System.currentTimeMillis() + "-test-file.txt", "");
 
         mvc.perform(multipart(uploadRequestPath)
-                        .file(testFile)
+                        .file(file)
                         .param("path", ""))
                 .andExpect(status().isCreated());
     }
@@ -46,43 +32,36 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void uploadFolder_shouldReturnStatus201() {
-        String paramName = "object";
-        String uploadRequestPath = "/api/resource";
-        String mainFolderFileName = "main-folder-file.txt";
-        String mainFolderFileContent = "Text from main-folder-file.txt";
-        String nestedFolderFileName = "nested-folder-file.txt";
-        String nestedFolderFileContent = "Text from nested-folder-file.txt";
-        String mainFolderToUpload = "main_folder/";
-        String nestedFolderToUpload = "main_folder/nested_folder/";
+        String mainFolderFileName = System.currentTimeMillis() + "-main-folder-file.txt";
+        String nestedFolderFileName = System.currentTimeMillis() + "-nested-folder-file.txt";
+        MockMultipartFile mainFolderFile = createFile(mainFolderFileName, "main_folder/");
+        MockMultipartFile nestedFolderFile = createFile(nestedFolderFileName, "main_folder/nested_folder/");
 
-        MockMultipartFile mainFolderFile = new MockMultipartFile(
-                paramName,
-                mainFolderToUpload + mainFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                mainFolderFileContent.getBytes()
-        );
-
-        MockMultipartFile nestedFolderFile = new MockMultipartFile(
-                paramName,
-                nestedFolderToUpload + nestedFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                nestedFolderFileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
+        mvc.perform(multipart("/api/resource")
                         .file(mainFolderFile)
                         .file(nestedFolderFile)
-                        .param("path", mainFolderToUpload))
-                .andExpect(status().isCreated());
+                        .param("path", ""))
+                .andExpect(status().isCreated())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(jsonPath("$", instanceOf(List.class)))
+                .andExpect(jsonPath("$.length()", is(2)))
+
+                .andExpect(jsonPath("$[0].path", is("user-1-files/main_folder/")))
+                .andExpect(jsonPath("$[0].name", is(mainFolderFileName)))
+                .andExpect(jsonPath("$[0].size", is(mainFolderFile.getBytes().length)))
+                .andExpect(jsonPath("$[0].type", is("FILE")))
+
+                .andExpect(jsonPath("$[1].path", is("user-1-files/main_folder/nested_folder/")))
+                .andExpect(jsonPath("$[1].name", is(nestedFolderFileName)))
+                .andExpect(jsonPath("$[1].size", is(nestedFolderFile.getBytes().length)))
+                .andExpect(jsonPath("$[1].type", is("FILE")));
     }
 
     @SneakyThrows
     @Test
     @WithMockCustomUser
     void upload_withEmptyRequestBody_shouldReturnStatus400() {
-        String uploadRequestPath = "/api/resource";
-
-        mvc.perform(multipart(uploadRequestPath)
+        mvc.perform(multipart("/api/resource")
                         .param("path", ""))
                 .andExpect(status().isBadRequest());
     }
@@ -91,24 +70,10 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void upload_duplicateFileToSamePath_shouldReturnStatus409() {
-        String paramName = "object";
-        String fileName = "test-file.txt";
-        String fileNameContent = "Text from test-file.txt";
-        String uploadRequestPath = "/api/resource";
+        MockMultipartFile testFile = createFile(System.currentTimeMillis() + "test-file.txt", "");
+        uploadFile(testFile, "");
 
-        MockMultipartFile testFile = new MockMultipartFile(
-                paramName,
-                fileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                fileNameContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                        .file(testFile)
-                        .param("path", ""))
-                .andExpect(status().isCreated());
-
-        mvc.perform(multipart(uploadRequestPath)
+        mvc.perform(multipart("/api/resource")
                         .file(testFile)
                         .param("path", ""))
                 .andExpect(status().isConflict());
@@ -118,39 +83,15 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void upload_duplicateFolderToSamePath_shouldReturnStatus409() {
-        String paramName = "object";
-        String uploadRequestPath = "/api/resource";
-        String mainFolderFileName = "main-folder-file.txt";
-        String mainFolderFileContent = "Text from main-folder-file.txt";
-        String nestedFolderFileName = "nested-folder-file.txt";
-        String nestedFolderContent = "Text from nested-folder-file.txt";
-        String mainFolderToUpload = "main_folder/";
-        String nestedFolderToUpload = "main_folder/nested_folder/";
+        MockMultipartFile mainFolderFile = createFile(System.currentTimeMillis() + "-main-folder-file.txt", "main_folder/");
+        MockMultipartFile nestedFolderFile = createFile(System.currentTimeMillis() + "-nested-folder-file.txt", "main_folder/nested_folder/");
+        uploadFile(mainFolderFile, "");
+        uploadFile(nestedFolderFile, "main_folder/");
 
-        MockMultipartFile mainFolderFile = new MockMultipartFile(
-                paramName,
-                mainFolderToUpload + mainFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                mainFolderFileContent.getBytes()
-        );
-
-        MockMultipartFile nestedFolderFile = new MockMultipartFile(
-                paramName,
-                nestedFolderToUpload + nestedFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                nestedFolderContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
+        mvc.perform(multipart("/api/resource")
                         .file(mainFolderFile)
                         .file(nestedFolderFile)
-                        .param("path", mainFolderToUpload))
-                .andExpect(status().isCreated());
-
-        mvc.perform(multipart(uploadRequestPath)
-                        .file(mainFolderFile)
-                        .file(nestedFolderFile)
-                        .param("path", mainFolderToUpload))
+                        .param("path", "main_folder/"))
                 .andExpect(status().isConflict());
     }
 
@@ -158,24 +99,11 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void getFileInfo_shouldReturnStatus200() {
-        String paramName = "object";
-        String fileName = "test-file.txt";
-        String fileNameContent = "Text from test-file.txt";
-        String uploadRequestPath = "/api/resource";
-        String getInfoUrl = "/api/resource?path=test-file.txt";
+        String fileName = System.currentTimeMillis() + "-test-file.txt";
+        MockMultipartFile file = createFile(fileName, "");
+        uploadFile(file, "");
 
-        MockMultipartFile testFile = new MockMultipartFile(
-                paramName,
-                fileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                fileNameContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(testFile)
-                .param("path", ""));
-
-        mvc.perform(get(getInfoUrl))
+        mvc.perform(get("/api/resource?path=" + fileName))
                 .andExpect(status().isOk());
     }
 
@@ -183,36 +111,12 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void getFolderInfo_shouldReturnStatus200() {
-        String paramName = "object";
-        String uploadRequestPath = "/api/resource";
-        String mainFolderFileName = "main-folder-file.txt";
-        String mainFolderFileContent = "Text from main-folder-file.txt";
-        String nestedFolderFileName = "nested-folder-file.txt";
-        String nestedFolderContent = "Text from nested-folder-file.txt";
-        String mainFolderToUpload = "main_folder/";
-        String nestedFolderToUpload = "/main_folder/nested_folder/";
-        String getInfoUrl = "/api/resource?path=" + nestedFolderToUpload;
+        MockMultipartFile mainFolderFile = createFile(System.currentTimeMillis() + "-main-folder-file.txt", "main_folder/");
+        MockMultipartFile nestedFolderFile = createFile(System.currentTimeMillis() + "-nested-folder-file.txt", "nested_folder/");
+        uploadFile(mainFolderFile, "");
+        uploadFile(nestedFolderFile, "main_folder/");
 
-        MockMultipartFile mainFolderFile = new MockMultipartFile(
-                paramName,
-                mainFolderToUpload + mainFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                mainFolderFileContent.getBytes()
-        );
-
-        MockMultipartFile nestedFolderFile = new MockMultipartFile(
-                paramName,
-                nestedFolderToUpload + nestedFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                nestedFolderContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(mainFolderFile)
-                .file(nestedFolderFile)
-                .param("path", mainFolderToUpload));
-
-        mvc.perform(get(getInfoUrl))
+        mvc.perform(get("/api/resource?path=main_folder/nested_folder/"))
                 .andExpect(status().isOk());
     }
 
@@ -220,24 +124,11 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void getFileInfo_withInvalidPathParam_shouldReturnStatus400() {
-        String paramName = "object";
-        String fileName = "test-file.txt";
-        String fileNameContent = "Text from test-file.txt";
-        String uploadRequestPath = "/api/resource";
-        String getInfoUrl = "/api/resource?path=%^^&test-file.txt";
+        String fileName = System.currentTimeMillis() + "-test-file.txt";
+        MockMultipartFile file = createFile(fileName, "");
+        uploadFile(file, "");
 
-        MockMultipartFile testFile = new MockMultipartFile(
-                paramName,
-                fileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                fileNameContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(testFile)
-                .param("path", ""));
-
-        mvc.perform(get(getInfoUrl))
+        mvc.perform(get("/api/resource?path=%^^&test-file.txt"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -245,36 +136,12 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void getFolderInfo_withInvalidPathParam_shouldReturnStatus400() {
-        String paramName = "object";
-        String uploadRequestPath = "/api/resource";
-        String mainFolderFileName = "main-folder-file.txt";
-        String mainFolderFileContent = "Text from main-folder-file.txt";
-        String nestedFolderFileName = "nested-folder-file.txt";
-        String nestedFolderContent = "Text from nested-folder-file.txt";
-        String mainFolderToUpload = "main_folder/";
-        String nestedFolderToUpload = "/main_folder/nested_folder/";
-        String getInfoUrl = "/api/resource?path=/" + mainFolderToUpload + "^^$))";
+        MockMultipartFile mainFolderFile = createFile(System.currentTimeMillis() + "-main-folder-file.txt", "main_folder/");
+        MockMultipartFile nestedFolderFile = createFile(System.currentTimeMillis() + "-nested-folder-file.txt", "nested_folder/");
+        uploadFile(mainFolderFile, "");
+        uploadFile(nestedFolderFile, "main_folder/");
 
-        MockMultipartFile mainFolderFile = new MockMultipartFile(
-                paramName,
-                mainFolderToUpload + mainFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                mainFolderFileContent.getBytes()
-        );
-
-        MockMultipartFile nestedFolderFile = new MockMultipartFile(
-                paramName,
-                nestedFolderToUpload + nestedFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                nestedFolderContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(mainFolderFile)
-                .file(nestedFolderFile)
-                .param("path", mainFolderToUpload));
-
-        mvc.perform(get(getInfoUrl))
+        mvc.perform(get("/api/resource?path=/main_folder/^^$))"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -298,25 +165,12 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void deleteFile_shouldReturnStatus204() {
-        String paramName = "object";
-        String fileName = "test-file.txt";
-        String fileNameContent = "Text from test-file.txt";
-        String requestPath = "/api/resource";
-        String userRootFolder = "user-1-files/";
+        String fileName = System.currentTimeMillis() + "-test-file.txt";
+        MockMultipartFile file = createFile(fileName, "");
+        uploadFile(file, "");
 
-        MockMultipartFile testFile = new MockMultipartFile(
-                paramName,
-                fileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                fileNameContent.getBytes()
-        );
-
-        mvc.perform(multipart(requestPath)
-                .file(testFile)
-                .param("path", ""));
-
-        mvc.perform(MockMvcRequestBuilders.delete(requestPath)
-                        .param("path", userRootFolder + fileName))
+        mvc.perform(MockMvcRequestBuilders.delete("/api/resource")
+                        .param("path", fileName))
                 .andExpect(status().isNoContent());
     }
 
@@ -324,37 +178,13 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void deleteFolder_shouldReturnStatus204() {
-        String paramName = "object";
-        String uploadRequestPath = "/api/resource";
-        String mainFolderFileName = "main-folder-file.txt";
-        String mainFolderFileContent = "Text from main-folder-file.txt";
-        String nestedFolderFileName = "nested-folder-file.txt";
-        String nestedFolderFileContent = "Text from nested-folder-file.txt";
-        String mainFolderToUpload = "main_folder/";
-        String nestedFolderToUpload = "main_folder/nested_folder/";
-        String userRootFolder = "user-1-files/";
+        MockMultipartFile mainFolderFile = createFile(System.currentTimeMillis() + "-main-folder-file.txt", "main_folder/");
+        MockMultipartFile nestedFolderFile = createFile(System.currentTimeMillis() + "-nested-folder-file.txt", "nested_folder/");
+        uploadFile(mainFolderFile, "");
+        uploadFile(nestedFolderFile, "main_folder/");
 
-        MockMultipartFile mainFolderFile = new MockMultipartFile(
-                paramName,
-                mainFolderToUpload + mainFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                mainFolderFileContent.getBytes()
-        );
-
-        MockMultipartFile nestedFolderFile = new MockMultipartFile(
-                paramName,
-                nestedFolderToUpload + nestedFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                nestedFolderFileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(mainFolderFile)
-                .file(nestedFolderFile)
-                .param("path", mainFolderToUpload));
-
-        mvc.perform(MockMvcRequestBuilders.delete(uploadRequestPath)
-                        .param("path", userRootFolder + mainFolderToUpload))
+        mvc.perform(MockMvcRequestBuilders.delete("/api/resource")
+                        .param("path", "main_folder/"))
                 .andExpect(status().isNoContent());
     }
 
@@ -362,23 +192,11 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void deleteFile_withEmptyPath_shouldReturnStatus400() {
-        String paramName = "object";
-        String fileName = "test-file.txt";
-        String fileNameContent = "Text from test-file.txt";
-        String requestPath = "/api/resource";
+        String fileName = System.currentTimeMillis() + "-test-file.txt";
+        MockMultipartFile file = createFile(fileName, "");
+        uploadFile(file, "");
 
-        MockMultipartFile testFile = new MockMultipartFile(
-                paramName,
-                fileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                fileNameContent.getBytes()
-        );
-
-        mvc.perform(multipart(requestPath)
-                .file(testFile)
-                .param("path", ""));
-
-        mvc.perform(MockMvcRequestBuilders.delete(requestPath))
+        mvc.perform(MockMvcRequestBuilders.delete("/api/resource"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -386,25 +204,12 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void deleteFile_withInvalidPath_shouldReturnStatus400() {
-        String paramName = "object";
-        String fileName = "test-file.txt";
-        String fileNameContent = "Text from test-file.txt";
-        String requestPath = "/api/resource";
-        String userRootFolder = "user-1-files/";
+        String fileName = System.currentTimeMillis() + "-test-file.txt";
+        MockMultipartFile file = createFile(fileName, "");
+        uploadFile(file, "");
 
-        MockMultipartFile testFile = new MockMultipartFile(
-                paramName,
-                fileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                fileNameContent.getBytes()
-        );
-
-        mvc.perform(multipart(requestPath)
-                .file(testFile)
-                .param("path", ""));
-
-        mvc.perform(MockMvcRequestBuilders.delete(requestPath)
-                        .param("path", userRootFolder + fileName + "%$##&"))
+        mvc.perform(MockMvcRequestBuilders.delete("/api/resource")
+                        .param("path", fileName + "%$##&"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -412,73 +217,26 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void deleteFolder_withEmptyPath_shouldReturnStatus400() {
-        String paramName = "object";
-        String uploadRequestPath = "/api/resource";
-        String mainFolderFileName = "main-folder-file.txt";
-        String mainFolderFileContent = "Text from main-folder-file.txt";
-        String nestedFolderFileName = "nested-folder-file.txt";
-        String nestedFolderFileContent = "Text from nested-folder-file.txt";
-        String mainFolderToUpload = "main_folder/";
-        String nestedFolderToUpload = "main_folder/nested_folder/";
+        MockMultipartFile mainFolderFile = createFile(System.currentTimeMillis() + "-main-folder-file.txt", "main_folder/");
+        MockMultipartFile nestedFolderFile = createFile(System.currentTimeMillis() + "-nested-folder-file.txt", "nested_folder/");
+        uploadFile(mainFolderFile, "");
+        uploadFile(nestedFolderFile, "main_folder/");
 
-        MockMultipartFile mainFolderFile = new MockMultipartFile(
-                paramName,
-                mainFolderToUpload + mainFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                mainFolderFileContent.getBytes()
-        );
-
-        MockMultipartFile nestedFolderFile = new MockMultipartFile(
-                paramName,
-                nestedFolderToUpload + nestedFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                nestedFolderFileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(mainFolderFile)
-                .file(nestedFolderFile)
-                .param("path", mainFolderToUpload));
-
-        mvc.perform(MockMvcRequestBuilders.delete(uploadRequestPath))
+        mvc.perform(MockMvcRequestBuilders.delete("/api/resource"))
                 .andExpect(status().isBadRequest());
     }
 
     @SneakyThrows
     @Test
     @WithMockCustomUser
-    void deleteFolder_withInvalidPath_shouldReturnStatus204() {
-        String paramName = "object";
-        String uploadRequestPath = "/api/resource";
-        String mainFolderFileName = "main-folder-file.txt";
-        String mainFolderFileContent = "Text from main-folder-file.txt";
-        String nestedFolderFileName = "nested-folder-file.txt";
-        String nestedFolderFileContent = "Text from nested-folder-file.txt";
-        String mainFolderToUpload = "main_folder/";
-        String nestedFolderToUpload = "main_folder/nested_folder/";
-        String userRootFolder = "user-1-files/";
+    void deleteFolder_withInvalidPath_shouldReturnStatus400() {
+        MockMultipartFile mainFolderFile = createFile(System.currentTimeMillis() + "-main-folder-file.txt", "main_folder/");
+        MockMultipartFile nestedFolderFile = createFile(System.currentTimeMillis() + "-nested-folder-file.txt", "nested_folder/");
+        uploadFile(mainFolderFile, "");
+        uploadFile(nestedFolderFile, "main_folder/");
 
-        MockMultipartFile mainFolderFile = new MockMultipartFile(
-                paramName,
-                mainFolderToUpload + mainFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                mainFolderFileContent.getBytes()
-        );
-
-        MockMultipartFile nestedFolderFile = new MockMultipartFile(
-                paramName,
-                nestedFolderToUpload + nestedFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                nestedFolderFileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(mainFolderFile)
-                .file(nestedFolderFile)
-                .param("path", mainFolderToUpload));
-
-        mvc.perform(MockMvcRequestBuilders.delete(uploadRequestPath)
-                        .param("path", userRootFolder + "%$##&" + mainFolderToUpload))
+        mvc.perform(MockMvcRequestBuilders.delete("/api/resource")
+                        .param("path", "%$##&main_folder/"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -486,25 +244,17 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void deleteFile_whenFileDoesNotExist_shouldReturnStatus404() {
-        String requestPath = "/api/resource";
-        String userRootFolder = "user-1-files/";
-        String fileName = "test-file.txt";
-
-        mvc.perform(MockMvcRequestBuilders.delete(requestPath)
-                        .param("path", userRootFolder + fileName))
+        mvc.perform(MockMvcRequestBuilders.delete("/api/resource")
+                        .param("path", "test-file.txt"))
                 .andExpect(status().isNotFound());
     }
 
     @SneakyThrows
     @Test
     @WithMockCustomUser
-    void deleteFolder_whenFolderDoesNotExist_shouldReturnStatus204() {
-        String uploadRequestPath = "/api/resource";
-        String userRootFolder = "user-1-files/";
-        String mainFolderToUpload = "main_folder/";
-
-        mvc.perform(MockMvcRequestBuilders.delete(uploadRequestPath)
-                        .param("path", userRootFolder + mainFolderToUpload))
+    void deleteFolder_whenFolderDoesNotExist_shouldReturnStatus404() {
+        mvc.perform(MockMvcRequestBuilders.delete("/api/resource")
+                        .param("path", "main_folder/"))
                 .andExpect(status().isNotFound());
     }
 
@@ -512,26 +262,12 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void downloadFile_shouldReturnStatus200() {
-        String paramName = "object";
         String fileName = System.currentTimeMillis() + "-test-file.txt";
-        String fileContent = "Text from " + fileName;
-        String uploadRequestPath = "/api/resource";
-        String downloadEndpoint = "/api/resource/download";
-        String downloadPath = "user-1-files/" + fileName;
+        MockMultipartFile file = createFile(fileName, "");
+        uploadFile(file, "");
 
-        MockMultipartFile testFile = new MockMultipartFile(
-                paramName,
-                fileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                fileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(testFile)
-                .param("path", ""));
-
-        mvc.perform(get(downloadEndpoint)
-                        .param("path", downloadPath))
+        mvc.perform(get("/api/resource/download")
+                        .param("path", fileName))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_OCTET_STREAM));
     }
@@ -540,38 +276,13 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void downloadFolder_shouldReturnStatus200() {
-        String paramName = "object";
-        String uploadRequestPath = "/api/resource";
-        String mainFolderFileName = System.currentTimeMillis() + "-main-folder-file.txt";
-        String mainFolderFileContent = "Text from " + mainFolderFileName;
-        String nestedFolderFileName = System.currentTimeMillis() + "-nested-folder-file.txt";
-        String nestedFolderFileContent = "Text from " + nestedFolderFileName;
-        String mainFolderToUpload = "main_folder/";
-        String nestedFolderToUpload = "main_folder/nested_folder/";
-        String downloadEndpoint = "/api/resource/download";
-        String downloadPath = "user-1-files/" + mainFolderToUpload;
+        MockMultipartFile mainFolderFile = createFile(System.currentTimeMillis() + "-main-folder-file.txt", "main_folder/");
+        MockMultipartFile nestedFolderFile = createFile(System.currentTimeMillis() + "-nested-folder-file.txt", "nested_folder/");
+        uploadFile(mainFolderFile, "");
+        uploadFile(nestedFolderFile, "main_folder/");
 
-        MockMultipartFile mainFolderFile = new MockMultipartFile(
-                paramName,
-                mainFolderToUpload + mainFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                mainFolderFileContent.getBytes()
-        );
-
-        MockMultipartFile nestedFolderFile = new MockMultipartFile(
-                paramName,
-                nestedFolderToUpload + nestedFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                nestedFolderFileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(mainFolderFile)
-                .file(nestedFolderFile)
-                .param("path", mainFolderToUpload));
-
-        mvc.perform(get(downloadEndpoint)
-                        .param("path", downloadPath))
+        mvc.perform(get("/api/resource/download")
+                        .param("path", "main_folder/"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/zip"));
     }
@@ -580,16 +291,11 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void downloadEmptyFolder_ShouldReturnStatus200() {
-        String createEmptyFolderEndpoint = "/api/directory";
-        String downloadEndpoint = "/api/resource/download";
-        String emptyFolderName = "new_empty_folder/";
-        String downloadPath = "user-1-files/" + emptyFolderName;
+        mvc.perform(post("/api/directory")
+                .param("path", "new_empty_folder/"));
 
-        mvc.perform(post(createEmptyFolderEndpoint)
-                .param("path", emptyFolderName));
-
-        mvc.perform(get(downloadEndpoint)
-                        .param("path", downloadPath))
+        mvc.perform(get("/api/resource/download")
+                        .param("path", "new_empty_folder/"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/zip"));
     }
@@ -599,24 +305,11 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void downloadFile_withEmptyPath_shouldReturnStatus400() {
-        String paramName = "object";
         String fileName = System.currentTimeMillis() + "-test-file.txt";
-        String fileContent = "Text from " + fileName;
-        String uploadRequestPath = "/api/resource";
-        String downloadEndpoint = "/api/resource/download";
+        MockMultipartFile file = createFile(fileName, "");
+        uploadFile(file, "");
 
-        MockMultipartFile testFile = new MockMultipartFile(
-                paramName,
-                fileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                fileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(testFile)
-                .param("path", ""));
-
-        mvc.perform(get(downloadEndpoint))
+        mvc.perform(get("/api/resource/download"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -624,65 +317,25 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void downloadFile_withInvalidPath_shouldReturnStatus400() {
-        String paramName = "object";
         String fileName = System.currentTimeMillis() + "-test-file.txt";
-        String fileContent = "Text from " + fileName;
-        String uploadRequestPath = "/api/resource";
-        String downloadEndpoint = "/api/resource/download";
-        String downloadPath = "user-1-files/" + fileName + "%%^&^))";
+        MockMultipartFile file = createFile(fileName, "");
+        uploadFile(file, "");
 
-        MockMultipartFile testFile = new MockMultipartFile(
-                paramName,
-                fileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                fileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(testFile)
-                .param("path", ""));
-
-        mvc.perform(get(downloadEndpoint)
-                        .param("path", downloadPath))
+        mvc.perform(get("/api/resource/download")
+                        .param("path", fileName + "%%^&^))"))
                 .andExpect(status().isBadRequest());
     }
 
-
-    // скачивание: отсутствующий путь папки кидает ошибку и код 400
     @SneakyThrows
     @Test
     @WithMockCustomUser
     void downloadFolder_withEmptyPath_shouldReturnStatus400() {
-        String paramName = "object";
-        String uploadRequestPath = "/api/resource";
-        String mainFolderFileName = System.currentTimeMillis() + "-main-folder-file.txt";
-        String mainFolderFileContent = "Text from " + mainFolderFileName;
-        String nestedFolderFileName = System.currentTimeMillis() + "-nested-folder-file.txt";
-        String nestedFolderFileContent = "Text from " + nestedFolderFileName;
-        String mainFolderToUpload = "main_folder/";
-        String nestedFolderToUpload = "main_folder/nested_folder/";
-        String downloadEndpoint = "/api/resource/download";
+        MockMultipartFile mainFolderFile = createFile(System.currentTimeMillis() + "-main-folder-file.txt", "main_folder/");
+        MockMultipartFile nestedFolderFile = createFile(System.currentTimeMillis() + "-nested-folder-file.txt", "nested_folder/");
+        uploadFile(mainFolderFile, "");
+        uploadFile(nestedFolderFile, "main_folder/");
 
-        MockMultipartFile mainFolderFile = new MockMultipartFile(
-                paramName,
-                mainFolderToUpload + mainFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                mainFolderFileContent.getBytes()
-        );
-
-        MockMultipartFile nestedFolderFile = new MockMultipartFile(
-                paramName,
-                nestedFolderToUpload + nestedFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                nestedFolderFileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(mainFolderFile)
-                .file(nestedFolderFile)
-                .param("path", mainFolderToUpload));
-
-        mvc.perform(get(downloadEndpoint))
+        mvc.perform(get("/api/resource/download"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -690,38 +343,13 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void downloadFolder_withInvalidPath_shouldReturnStatus400() {
-        String paramName = "object";
-        String uploadRequestPath = "/api/resource";
-        String mainFolderFileName = System.currentTimeMillis() + "-main-folder-file.txt";
-        String mainFolderFileContent = "Text from " + mainFolderFileName;
-        String nestedFolderFileName = System.currentTimeMillis() + "-nested-folder-file.txt";
-        String nestedFolderFileContent = "Text from " + nestedFolderFileName;
-        String mainFolderToUpload = "main_folder/";
-        String nestedFolderToUpload = "main_folder/nested_folder/";
-        String downloadEndpoint = "/api/resource/download";
-        String downloadPath = "user-1-files/" + "%%^&^))" + mainFolderToUpload;
+        MockMultipartFile mainFolderFile = createFile(System.currentTimeMillis() + "-main-folder-file.txt", "main_folder/");
+        MockMultipartFile nestedFolderFile = createFile(System.currentTimeMillis() + "-nested-folder-file.txt", "nested_folder/");
+        uploadFile(mainFolderFile, "");
+        uploadFile(nestedFolderFile, "main_folder/");
 
-        MockMultipartFile mainFolderFile = new MockMultipartFile(
-                paramName,
-                mainFolderToUpload + mainFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                mainFolderFileContent.getBytes()
-        );
-
-        MockMultipartFile nestedFolderFile = new MockMultipartFile(
-                paramName,
-                nestedFolderToUpload + nestedFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                nestedFolderFileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(mainFolderFile)
-                .file(nestedFolderFile)
-                .param("path", mainFolderToUpload));
-
-        mvc.perform(get(downloadEndpoint)
-                        .param("path", downloadPath))
+        mvc.perform(get("/api/resource/download")
+                        .param("path", "%%^&^))main_folder/"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -729,28 +357,13 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void moveFile_shouldReturnStatus200() {
-        String paramName = "object";
         String fileName = System.currentTimeMillis() + "-test-file.txt";
-        String fileContent = "Text from " + fileName;
-        String uploadRequestPath = "/api/resource";
-        String moveEndpoint = "/api/resource/move";
-        String fromPath = "user-1-files/" + fileName;
-        String toPath = "user-1-files/" + "new folder" + fileName;
+        MockMultipartFile file = createFile(fileName, "");
+        uploadFile(file, "");
 
-        MockMultipartFile testFile = new MockMultipartFile(
-                paramName,
-                fileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                fileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(testFile)
-                .param("path", ""));
-
-        mvc.perform(get(moveEndpoint)
-                        .param("from", fromPath)
-                        .param("to", toPath))
+        mvc.perform(get("/api/resource/move")
+                        .param("from", fileName)
+                        .param("to", "new folder/" + fileName))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE));
     }
@@ -759,28 +372,13 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void renameFile_shouldReturnStatus200() {
-        String paramName = "object";
         String fileName = System.currentTimeMillis() + "-test-file.txt";
-        String fileContent = "Text from " + fileName;
-        String uploadRequestPath = "/api/resource";
-        String moveEndpoint = "/api/resource/move";
-        String fromPath = "user-1-files/" + fileName;
-        String toPath = "user-1-files/" + System.currentTimeMillis() + "new" + fileName;
+        MockMultipartFile file = createFile(fileName, "");
+        uploadFile(file, "");
 
-        MockMultipartFile testFile = new MockMultipartFile(
-                paramName,
-                fileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                fileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(testFile)
-                .param("path", ""));
-
-        mvc.perform(get(moveEndpoint)
-                        .param("from", fromPath)
-                        .param("to", toPath))
+        mvc.perform(get("/api/resource/move")
+                        .param("from", fileName)
+                        .param("to", "-new-" + fileName))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE));
     }
@@ -789,40 +387,14 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void moveFolder_shouldReturnStatus200() {
-        String paramName = "object";
-        String uploadRequestPath = "/api/resource";
-        String mainFolderFileName = System.currentTimeMillis() + "-main-folder-file.txt";
-        String mainFolderFileContent = "Text from " + mainFolderFileName;
-        String nestedFolderFileName = System.currentTimeMillis() + "-nested-folder-file.txt";
-        String nestedFolderFileContent = "Text from " + nestedFolderFileName;
-        String mainFolderToUpload = "main_folder/";
-        String nestedFolderToUpload = "main_folder/nested_folder/";
-        String moveEndpoint = "/api/resource/move";
-        String fromPath = "user-1-files/" + mainFolderToUpload + nestedFolderToUpload;
-        String toPath = "user-1-files/" + nestedFolderToUpload;
+        MockMultipartFile mainFolderFile = createFile(System.currentTimeMillis() + "-main-folder-file.txt", "main_folder/");
+        MockMultipartFile nestedFolderFile = createFile(System.currentTimeMillis() + "-nested-folder-file.txt", "nested_folder/");
+        uploadFile(mainFolderFile, "");
+        uploadFile(nestedFolderFile, "main_folder/");
 
-        MockMultipartFile mainFolderFile = new MockMultipartFile(
-                paramName,
-                mainFolderToUpload + mainFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                mainFolderFileContent.getBytes()
-        );
-
-        MockMultipartFile nestedFolderFile = new MockMultipartFile(
-                paramName,
-                nestedFolderToUpload + nestedFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                nestedFolderFileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(mainFolderFile)
-                .file(nestedFolderFile)
-                .param("path", mainFolderToUpload));
-
-        mvc.perform(get(moveEndpoint)
-                        .param("from", fromPath)
-                        .param("to", toPath))
+        mvc.perform(get("/api/resource/move")
+                        .param("from", "main_folder/nested_folder/")
+                        .param("to", "nested_folder/"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE));
     }
@@ -831,40 +403,14 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void renameFolder_shouldReturnStatus200() {
-        String paramName = "object";
-        String uploadRequestPath = "/api/resource";
-        String mainFolderFileName = System.currentTimeMillis() + "-main-folder-file.txt";
-        String mainFolderFileContent = "Text from " + mainFolderFileName;
-        String nestedFolderFileName = System.currentTimeMillis() + "-nested-folder-file.txt";
-        String nestedFolderFileContent = "Text from " + nestedFolderFileName;
-        String mainFolderToUpload = "main_folder/";
-        String nestedFolderToUpload = "main_folder/nested_folder/";
-        String moveEndpoint = "/api/resource/move";
-        String fromPath = "user-1-files/" + mainFolderToUpload;
-        String toPath = "user-1-files/" + "new main folder";
+        MockMultipartFile mainFolderFile = createFile(System.currentTimeMillis() + "-main-folder-file.txt", "main_folder/");
+        MockMultipartFile nestedFolderFile = createFile(System.currentTimeMillis() + "-nested-folder-file.txt", "nested_folder/");
+        uploadFile(mainFolderFile, "");
+        uploadFile(nestedFolderFile, "main_folder/");
 
-        MockMultipartFile mainFolderFile = new MockMultipartFile(
-                paramName,
-                mainFolderToUpload + mainFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                mainFolderFileContent.getBytes()
-        );
-
-        MockMultipartFile nestedFolderFile = new MockMultipartFile(
-                paramName,
-                nestedFolderToUpload + nestedFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                nestedFolderFileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(mainFolderFile)
-                .file(nestedFolderFile)
-                .param("path", mainFolderToUpload));
-
-        mvc.perform(get(moveEndpoint)
-                        .param("from", fromPath)
-                        .param("to", toPath))
+        mvc.perform(get("/api/resource/move")
+                        .param("from", "main_folder/")
+                        .param("to", "new main folder/"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE));
     }
@@ -873,26 +419,12 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void renameFile_withEmptyFromPath_shouldReturnStatus400() {
-        String paramName = "object";
         String fileName = System.currentTimeMillis() + "-test-file.txt";
-        String fileContent = "Text from " + fileName;
-        String uploadRequestPath = "/api/resource";
-        String moveEndpoint = "/api/resource/move";
-        String toPath = "user-1-files/" + System.currentTimeMillis() + "new" + fileName;
+        MockMultipartFile file = createFile(fileName, "");
+        uploadFile(file, "");
 
-        MockMultipartFile testFile = new MockMultipartFile(
-                paramName,
-                fileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                fileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(testFile)
-                .param("path", ""));
-
-        mvc.perform(get(moveEndpoint)
-                        .param("to", toPath))
+        mvc.perform(get("/api/resource/move")
+                        .param("to", "new" + fileName))
                 .andExpect(status().isBadRequest());
     }
 
@@ -900,26 +432,12 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void renameFile_withEmptyToPath_shouldReturnStatus400() {
-        String paramName = "object";
         String fileName = System.currentTimeMillis() + "-test-file.txt";
-        String fileContent = "Text from " + fileName;
-        String uploadRequestPath = "/api/resource";
-        String moveEndpoint = "/api/resource/move";
-        String fromPath = "user-1-files/" + fileName;
+        MockMultipartFile file = createFile(fileName, "");
+        uploadFile(file, "");
 
-        MockMultipartFile testFile = new MockMultipartFile(
-                paramName,
-                fileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                fileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(testFile)
-                .param("path", ""));
-
-        mvc.perform(get(moveEndpoint)
-                        .param("from", fromPath))
+        mvc.perform(get("/api/resource/move")
+                        .param("from", fileName))
                 .andExpect(status().isBadRequest());
     }
 
@@ -927,28 +445,13 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void renameFile_withInvalidFromPath_shouldReturnStatus400() {
-        String paramName = "object";
         String fileName = System.currentTimeMillis() + "-test-file.txt";
-        String fileContent = "Text from " + fileName;
-        String uploadRequestPath = "/api/resource";
-        String moveEndpoint = "/api/resource/move";
-        String fromPath = "user-1-files/" + "^%$#@" + fileName;
-        String toPath = "user-1-files/" + System.currentTimeMillis() + "new" + fileName;
+        MockMultipartFile file = createFile(fileName, "");
+        uploadFile(file, "");
 
-        MockMultipartFile testFile = new MockMultipartFile(
-                paramName,
-                fileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                fileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(testFile)
-                .param("path", ""));
-
-        mvc.perform(get(moveEndpoint)
-                        .param("from", fromPath)
-                        .param("to", toPath))
+        mvc.perform(get("/api/resource/move")
+                        .param("from", "^%$#@" + fileName)
+                        .param("to", "new" + fileName))
                 .andExpect(status().isBadRequest());
     }
 
@@ -956,28 +459,13 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void renameFile_withInvalidToPath_shouldReturnStatus400() {
-        String paramName = "object";
         String fileName = System.currentTimeMillis() + "-test-file.txt";
-        String fileContent = "Text from " + fileName;
-        String uploadRequestPath = "/api/resource";
-        String moveEndpoint = "/api/resource/move";
-        String fromPath = "user-1-files/" + fileName;
-        String toPath = "user-1-files/" + System.currentTimeMillis() + "^%$#@" + fileName;
+        MockMultipartFile file = createFile(fileName, "");
+        uploadFile(file, "");
 
-        MockMultipartFile testFile = new MockMultipartFile(
-                paramName,
-                fileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                fileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(testFile)
-                .param("path", ""));
-
-        mvc.perform(get(moveEndpoint)
-                        .param("from", fromPath)
-                        .param("to", toPath))
+        mvc.perform(get("/api/resource/move")
+                        .param("from", fileName)
+                        .param("to", "^%$#@" + fileName))
                 .andExpect(status().isBadRequest());
     }
 
@@ -985,38 +473,13 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void renameFolder_withEmptyFromPath_shouldReturnStatus400() {
-        String paramName = "object";
-        String uploadRequestPath = "/api/resource";
-        String mainFolderFileName = System.currentTimeMillis() + "-main-folder-file.txt";
-        String mainFolderFileContent = "Text from " + mainFolderFileName;
-        String nestedFolderFileName = System.currentTimeMillis() + "-nested-folder-file.txt";
-        String nestedFolderFileContent = "Text from " + nestedFolderFileName;
-        String mainFolderToUpload = "main_folder/";
-        String nestedFolderToUpload = "main_folder/nested_folder/";
-        String moveEndpoint = "/api/resource/move";
-        String toPath = "user-1-files/" + "new main folder";
+        MockMultipartFile mainFolderFile = createFile(System.currentTimeMillis() + "-main-folder-file.txt", "main_folder/");
+        MockMultipartFile nestedFolderFile = createFile(System.currentTimeMillis() + "-nested-folder-file.txt", "nested_folder/");
+        uploadFile(mainFolderFile, "");
+        uploadFile(nestedFolderFile, "main_folder/");
 
-        MockMultipartFile mainFolderFile = new MockMultipartFile(
-                paramName,
-                mainFolderToUpload + mainFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                mainFolderFileContent.getBytes()
-        );
-
-        MockMultipartFile nestedFolderFile = new MockMultipartFile(
-                paramName,
-                nestedFolderToUpload + nestedFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                nestedFolderFileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(mainFolderFile)
-                .file(nestedFolderFile)
-                .param("path", mainFolderToUpload));
-
-        mvc.perform(get(moveEndpoint)
-                        .param("to", toPath))
+        mvc.perform(get("/api/resource/move")
+                        .param("to", "new main folder/"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -1024,38 +487,13 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void renameFolder_withEmptyToPath_shouldReturnStatus400() {
-        String paramName = "object";
-        String uploadRequestPath = "/api/resource";
-        String mainFolderFileName = System.currentTimeMillis() + "-main-folder-file.txt";
-        String mainFolderFileContent = "Text from " + mainFolderFileName;
-        String nestedFolderFileName = System.currentTimeMillis() + "-nested-folder-file.txt";
-        String nestedFolderFileContent = "Text from " + nestedFolderFileName;
-        String mainFolderToUpload = "main_folder/";
-        String nestedFolderToUpload = "main_folder/nested_folder/";
-        String moveEndpoint = "/api/resource/move";
-        String fromPath = "user-1-files/" + mainFolderToUpload;
+        MockMultipartFile mainFolderFile = createFile(System.currentTimeMillis() + "-main-folder-file.txt", "main_folder/");
+        MockMultipartFile nestedFolderFile = createFile(System.currentTimeMillis() + "-nested-folder-file.txt", "nested_folder/");
+        uploadFile(mainFolderFile, "");
+        uploadFile(nestedFolderFile, "main_folder/");
 
-        MockMultipartFile mainFolderFile = new MockMultipartFile(
-                paramName,
-                mainFolderToUpload + mainFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                mainFolderFileContent.getBytes()
-        );
-
-        MockMultipartFile nestedFolderFile = new MockMultipartFile(
-                paramName,
-                nestedFolderToUpload + nestedFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                nestedFolderFileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(mainFolderFile)
-                .file(nestedFolderFile)
-                .param("path", mainFolderToUpload));
-
-        mvc.perform(get(moveEndpoint)
-                        .param("from", fromPath))
+        mvc.perform(get("/api/resource/move")
+                        .param("from", "main_folder/"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -1063,40 +501,14 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void renameFolder_withInvalidFromPath_shouldReturnStatus400() {
-        String paramName = "object";
-        String uploadRequestPath = "/api/resource";
-        String mainFolderFileName = System.currentTimeMillis() + "-main-folder-file.txt";
-        String mainFolderFileContent = "Text from " + mainFolderFileName;
-        String nestedFolderFileName = System.currentTimeMillis() + "-nested-folder-file.txt";
-        String nestedFolderFileContent = "Text from " + nestedFolderFileName;
-        String mainFolderToUpload = "main_folder/";
-        String nestedFolderToUpload = "main_folder/nested_folder/";
-        String moveEndpoint = "/api/resource/move";
-        String fromPath = "user-1-files/" + "%^$#&" + mainFolderToUpload;
-        String toPath = "user-1-files/" + "new main folder";
+        MockMultipartFile mainFolderFile = createFile(System.currentTimeMillis() + "-main-folder-file.txt", "main_folder/");
+        MockMultipartFile nestedFolderFile = createFile(System.currentTimeMillis() + "-nested-folder-file.txt", "nested_folder/");
+        uploadFile(mainFolderFile, "");
+        uploadFile(nestedFolderFile, "main_folder/");
 
-        MockMultipartFile mainFolderFile = new MockMultipartFile(
-                paramName,
-                mainFolderToUpload + mainFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                mainFolderFileContent.getBytes()
-        );
-
-        MockMultipartFile nestedFolderFile = new MockMultipartFile(
-                paramName,
-                nestedFolderToUpload + nestedFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                nestedFolderFileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(mainFolderFile)
-                .file(nestedFolderFile)
-                .param("path", mainFolderToUpload));
-
-        mvc.perform(get(moveEndpoint)
-                        .param("from", fromPath)
-                        .param("to", toPath))
+        mvc.perform(get("/api/resource/move")
+                        .param("from", "%^$#&main_folder/")
+                        .param("to", "new main folder/"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -1104,40 +516,14 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void renameFolder_withInvalidToPath_shouldReturnStatus400() {
-        String paramName = "object";
-        String uploadRequestPath = "/api/resource";
-        String mainFolderFileName = System.currentTimeMillis() + "-main-folder-file.txt";
-        String mainFolderFileContent = "Text from " + mainFolderFileName;
-        String nestedFolderFileName = System.currentTimeMillis() + "-nested-folder-file.txt";
-        String nestedFolderFileContent = "Text from " + nestedFolderFileName;
-        String mainFolderToUpload = "main_folder/";
-        String nestedFolderToUpload = "main_folder/nested_folder/";
-        String moveEndpoint = "/api/resource/move";
-        String fromPath = "user-1-files/" + mainFolderToUpload;
-        String toPath = "user-1-files/" + "%^$#" + "new main folder";
+        MockMultipartFile mainFolderFile = createFile(System.currentTimeMillis() + "-main-folder-file.txt", "main_folder/");
+        MockMultipartFile nestedFolderFile = createFile(System.currentTimeMillis() + "-nested-folder-file.txt", "nested_folder/");
+        uploadFile(mainFolderFile, "");
+        uploadFile(nestedFolderFile, "main_folder/");
 
-        MockMultipartFile mainFolderFile = new MockMultipartFile(
-                paramName,
-                mainFolderToUpload + mainFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                mainFolderFileContent.getBytes()
-        );
-
-        MockMultipartFile nestedFolderFile = new MockMultipartFile(
-                paramName,
-                nestedFolderToUpload + nestedFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                nestedFolderFileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(mainFolderFile)
-                .file(nestedFolderFile)
-                .param("path", mainFolderToUpload));
-
-        mvc.perform(get(moveEndpoint)
-                        .param("from", fromPath)
-                        .param("to", toPath))
+        mvc.perform(get("/api/resource/move")
+                        .param("from", "main_folder/")
+                        .param("to", "%^$#new main folder/"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -1146,14 +532,10 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @WithMockCustomUser
     void renameNonExistentFile_shouldReturnStatus404() {
         String fileName = System.currentTimeMillis() + "-test-file.txt";
-        String moveEndpoint = "/api/resource/move";
-        String fromPath = "user-1-files/" + fileName;
-        String toPath = "user-1-files/" + System.currentTimeMillis() + "new" + fileName;
 
-
-        mvc.perform(get(moveEndpoint)
-                        .param("from", fromPath)
-                        .param("to", toPath))
+        mvc.perform(get("/api/resource/move")
+                        .param("from", fileName)
+                        .param("to", "new" + fileName))
                 .andExpect(status().isNotFound());
     }
 
@@ -1161,14 +543,9 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void renameNonExistentFolder_shouldReturnStatus404() {
-        String mainFolderToUpload = "main_folder/";
-        String moveEndpoint = "/api/resource/move";
-        String fromPath = "user-1-files/" + mainFolderToUpload;
-        String toPath = "user-1-files/" + "new main folder";
-
-        mvc.perform(get(moveEndpoint)
-                        .param("from", fromPath)
-                        .param("to", toPath))
+        mvc.perform(get("/api/resource/move")
+                        .param("from", "main_folder/")
+                        .param("to", "new main folder/"))
                 .andExpect(status().isNotFound());
     }
 
@@ -1176,38 +553,16 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void renameFile_withAlreadyExistingName_shouldReturnStatus409() {
-        String paramName = "object";
-        String fileName = System.currentTimeMillis() + "-test-file.txt";
-        String existingFileName = "new" + fileName;
-        String fileContent = "Text from " + fileName;
-        String existingFileContent = "Text from " + existingFileName;
-        String uploadRequestPath = "/api/resource";
-        String moveEndpoint = "/api/resource/move";
-        String fromPath = "user-1-files/" + fileName;
-        String toPath = "user-1-files/" + "new" + fileName;
+        String testFileName = System.currentTimeMillis() + "-test-file.txt";
+        String existingFileName = System.currentTimeMillis() + "-existing-file.txt";
+        MockMultipartFile mainFolderFile = createFile(testFileName, "");
+        MockMultipartFile nestedFolderFile = createFile(existingFileName, "");
+        uploadFile(mainFolderFile, "");
+        uploadFile(nestedFolderFile, "");
 
-        MockMultipartFile testFile = new MockMultipartFile(
-                paramName,
-                fileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                fileContent.getBytes()
-        );
-
-        MockMultipartFile existingFile = new MockMultipartFile(
-                paramName,
-                existingFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                existingFileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(testFile)
-                .file(existingFile)
-                .param("path", ""));
-
-        mvc.perform(get(moveEndpoint)
-                        .param("from", fromPath)
-                        .param("to", toPath))
+        mvc.perform(get("/api/resource/move")
+                        .param("from", testFileName)
+                        .param("to", existingFileName))
                 .andExpect(status().isConflict());
     }
 
@@ -1215,33 +570,15 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void moveFile_withAlreadyExistingName_shouldReturnStatus409() {
-        String paramName = "object";
-        String fileName = System.currentTimeMillis() + "-test-file.txt";
-        String fileContent = "Text from " + fileName;
-        String uploadEndpoint = "/api/resource";
-        String alreadyExistingFilePath = "folder/";
-        String moveEndpoint = "/api/resource/move";
-        String fromPath = "user-1-files/" + fileName;
-        String toPath = "user-1-files/" + alreadyExistingFilePath + fileName;
+        String testFileName = System.currentTimeMillis() + "-test-file.txt";
+        MockMultipartFile mainFolderFile = createFile(testFileName, "");
+        MockMultipartFile nestedFolderFile = createFile(testFileName, "main_folder/");
+        uploadFile(mainFolderFile, "");
+        uploadFile(nestedFolderFile, "");
 
-        MockMultipartFile testFile = new MockMultipartFile(
-                paramName,
-                fileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                fileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadEndpoint)
-                .file(testFile)
-                .param("path", ""));
-
-        mvc.perform(multipart(uploadEndpoint)
-                .file(testFile)
-                .param("path", alreadyExistingFilePath));
-
-        mvc.perform(get(moveEndpoint)
-                        .param("from", fromPath)
-                        .param("to", toPath))
+        mvc.perform(get("/api/resource/move")
+                        .param("from", testFileName)
+                        .param("to", "main_folder/" + testFileName))
                 .andExpect(status().isConflict());
     }
 
@@ -1249,44 +586,15 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void renameFolder_withAlreadyExistingName_shouldReturnStatus409() {
-        String paramName = "object";
-        String uploadRequestPath = "/api/resource";
-        String mainFolderFileName = System.currentTimeMillis() + "-main-folder-file.txt";
-        String mainFolderFileContent = "Text from " + mainFolderFileName;
-        String nestedFolderFileName = System.currentTimeMillis() + "-nested-folder-file.txt";
-        String nestedFolderFileContent = "Text from " + nestedFolderFileName;
-        String mainFolderToUpload = "main_folder/";
-        String nestedFolderToUpload = "main_folder/nested_folder/";
-        String moveEndpoint = "/api/resource/move";
-        String fromPath = "user-1-files/" + mainFolderToUpload;
-        String toPath = "user-1-files/" + "new main folder";
-        String createNewFolderEndpoint = "/api/directory";
+        MockMultipartFile mainFolderFile = createFile(System.currentTimeMillis() + "-main-folder-file.txt", "main_folder/");
+        uploadFile(mainFolderFile, "");
 
-        MockMultipartFile mainFolderFile = new MockMultipartFile(
-                paramName,
-                mainFolderToUpload + mainFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                mainFolderFileContent.getBytes()
-        );
-
-        MockMultipartFile nestedFolderFile = new MockMultipartFile(
-                paramName,
-                nestedFolderToUpload + nestedFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                nestedFolderFileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(mainFolderFile)
-                .file(nestedFolderFile)
-                .param("path", mainFolderToUpload));
-
-        mvc.perform(post(createNewFolderEndpoint)
+        mvc.perform(post("/api/directory")
                 .param("path", "new main folder/"));
 
-        mvc.perform(get(moveEndpoint)
-                        .param("from", fromPath)
-                        .param("to", toPath))
+        mvc.perform(get("/api/resource/move")
+                        .param("from", "main_folder/")
+                        .param("to", "new main folder/"))
                 .andExpect(status().isConflict());
     }
 
@@ -1294,51 +602,15 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void moveFolder_withAlreadyExistingName_shouldReturnStatus409() {
-        String paramName = "object";
-        String uploadRequestPath = "/api/resource";
-        String mainFolderFileName = System.currentTimeMillis() + "-main-folder-file.txt";
-        String mainFolderFileContent = "Text from " + mainFolderFileName;
-        String nestedFolderFileName = System.currentTimeMillis() + "-nested-folder-file.txt";
-        String nestedFolderFileContent = "Text from " + nestedFolderFileName;
-        String mainFolderToUpload = "main_folder/";
-        String nestedFolderToUpload = "main_folder/nested_folder/";
-        String moveEndpoint = "/api/resource/move";
-        String fromPath = "user-1-files/" + nestedFolderToUpload;
-        String toPath = "user-1-files/" + "nested_folder/";
-        String createNewFolderEndpoint = "/api/directory";
+        MockMultipartFile mainFolderFile = createFile(System.currentTimeMillis() + "-main-folder-file.txt", "main_folder/nested_folder/");
+        uploadFile(mainFolderFile, "");
 
-        MockMultipartFile mainFolderFile = new MockMultipartFile(
-                paramName,
-                mainFolderToUpload + mainFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                mainFolderFileContent.getBytes()
-        );
-
-        MockMultipartFile nestedFolderFile = new MockMultipartFile(
-                paramName,
-                nestedFolderToUpload + nestedFolderFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                nestedFolderFileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                        .file(mainFolderFile)
-                        .file(nestedFolderFile)
-                        .param("path", ""))
-                .andExpect(status().isCreated());
-
-        mvc.perform(get("/api/resource?path=main_folder/"))
-                .andExpect(status().isOk());
-
-        mvc.perform(get("/api/resource?path=main_folder/nested_folder/"))
-                .andExpect(status().isOk());
-
-        mvc.perform(post(createNewFolderEndpoint)
+        mvc.perform(post("/api/directory")
                 .param("path", "nested_folder/"));
 
-        mvc.perform(get(moveEndpoint)
-                        .param("from", fromPath)
-                        .param("to", toPath))
+        mvc.perform(get("/api/resource/move")
+                        .param("from", "main_folder/nested_folder/")
+                        .param("to", "nested_folder/"))
                 .andExpect(status().isConflict());
     }
 
@@ -1346,43 +618,22 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void searchFile_shouldReturnStatus200() {
-        String searchEndpoint = "/api/resource/search";
-        String paramName = "object";
-        String firstFileName = System.currentTimeMillis() + "-first-test-file.txt";
-        String secondFileName = System.currentTimeMillis() + "-second-test-file.txt";
-        String firstFileContent = "Text from " + firstFileName;
-        String secondFileContent = "Text from " + secondFileName;
-        String uploadRequestPath = "/api/resource";
-        String searchQuery = "first";
+        String firstFileName = System.currentTimeMillis() + "-first-file.txt";
+        String secondFileName = System.currentTimeMillis() + "-second-file.txt";
+        MockMultipartFile firstFile = createFile(firstFileName, "");
+        MockMultipartFile secondFile = createFile(secondFileName, "nested_folder/");
+        uploadFile(firstFile, "");
+        uploadFile(secondFile, "");
 
-        MockMultipartFile firstFile = new MockMultipartFile(
-                paramName,
-                firstFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                firstFileContent.getBytes()
-        );
-
-        MockMultipartFile secondFile = new MockMultipartFile(
-                paramName,
-                secondFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                secondFileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(firstFile)
-                .file(secondFile)
-                .param("path", ""));
-
-        mvc.perform(get(searchEndpoint)
-                        .param("query", searchQuery))
+        mvc.perform(get("/api/resource/search")
+                        .param("query", "first"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(jsonPath("$", instanceOf(List.class)))
                 .andExpect(jsonPath("$.length()", is(1)))
                 .andExpect(jsonPath("$[0].name", is(firstFileName)))
                 .andExpect(jsonPath("$[0].path", is("")))
-                .andExpect(jsonPath("$[0].size", is(firstFileContent.getBytes().length)))
+                .andExpect(jsonPath("$[0].size", is(("Text from " + firstFileName).getBytes().length)))
                 .andExpect(jsonPath("$[0].type", is("FILE")));
     }
 
@@ -1390,19 +641,14 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void searchFolder_shouldReturnStatus200() {
-        String searchEndpoint = "/api/resource/search";
-        String searchQuery = "nes";
-
-        String createEmptyFolderEndpoint = "/api/directory";
-
-        mvc.perform(post(createEmptyFolderEndpoint)
+        mvc.perform(post("/api/directory")
                 .param("path", "folder/"));
 
-        mvc.perform(post(createEmptyFolderEndpoint)
+        mvc.perform(post("/api/directory")
                 .param("path", "folder/nested folder/"));
 
-        mvc.perform(get(searchEndpoint)
-                        .param("query", searchQuery))
+        mvc.perform(get("/api/resource/search")
+                        .param("query", "nes"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(jsonPath("$", instanceOf(List.class)))
@@ -1416,34 +662,14 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void searchFile_withEmptyQuery_shouldReturnStatus400() {
-        String searchEndpoint = "/api/resource/search";
-        String paramName = "object";
-        String firstFileName = System.currentTimeMillis() + "-first-test-file.txt";
-        String secondFileName = System.currentTimeMillis() + "-second-test-file.txt";
-        String firstFileContent = "Text from " + firstFileName;
-        String secondFileContent = "Text from " + secondFileName;
-        String uploadRequestPath = "/api/resource";
+        String firstFileName = System.currentTimeMillis() + "-first-file.txt";
+        String secondFileName = System.currentTimeMillis() + "-second-file.txt";
+        MockMultipartFile firstFile = createFile(firstFileName, "");
+        MockMultipartFile secondFile = createFile(secondFileName, "nested_folder/");
+        uploadFile(firstFile, "");
+        uploadFile(secondFile, "");
 
-        MockMultipartFile firstFile = new MockMultipartFile(
-                paramName,
-                firstFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                firstFileContent.getBytes()
-        );
-
-        MockMultipartFile secondFile = new MockMultipartFile(
-                paramName,
-                secondFileName,
-                MediaType.TEXT_PLAIN_VALUE,
-                secondFileContent.getBytes()
-        );
-
-        mvc.perform(multipart(uploadRequestPath)
-                .file(firstFile)
-                .file(secondFile)
-                .param("path", ""));
-
-        mvc.perform(get(searchEndpoint))
+        mvc.perform(get("/api/resource/search"))
                 .andExpect(status().isBadRequest());
     }
 
@@ -1451,16 +677,13 @@ public class ResourceControllerTest extends BaseIntegrationTest {
     @Test
     @WithMockCustomUser
     void searchFolder_withEmptyQuery_shouldReturnStatus200() {
-        String searchEndpoint = "/api/resource/search";
-        String createEmptyFolderEndpoint = "/api/directory";
-
-        mvc.perform(post(createEmptyFolderEndpoint)
+        mvc.perform(post("/api/directory")
                 .param("path", "folder/"));
 
-        mvc.perform(post(createEmptyFolderEndpoint)
+        mvc.perform(post("/api/directory")
                 .param("path", "folder/nested folder/"));
 
-        mvc.perform(get(searchEndpoint))
+        mvc.perform(get("/api/resource/search"))
                 .andExpect(status().isBadRequest());
     }
 }
