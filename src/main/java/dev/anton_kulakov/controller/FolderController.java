@@ -8,6 +8,7 @@ import dev.anton_kulakov.exception.ResourceNotFoundException;
 import dev.anton_kulakov.model.SecurityUser;
 import dev.anton_kulakov.service.FolderService;
 import dev.anton_kulakov.service.MinioService;
+import dev.anton_kulakov.service.handler.FolderResourceHandler;
 import dev.anton_kulakov.util.PathProcessor;
 import dev.anton_kulakov.validation.ValidPath;
 import io.swagger.v3.oas.annotations.Operation;
@@ -32,6 +33,7 @@ import java.util.List;
 @Tag(name = OpenApiConfig.FOLDER_TAG)
 public class FolderController {
     private final FolderService folderService;
+    private final FolderResourceHandler folderResourceHandler;
     private final MinioService minioService;
     private final PathProcessor pathProcessor;
 
@@ -121,6 +123,11 @@ public class FolderController {
             @RequestParam
             @Parameter(description = "The path to the folder containing the content the user is interested in", example = "folder/") String path) {
         String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
+
+        if (!folderResourceHandler.isExists(userRootFolder + path)) {
+            throw new ResourceNotFoundException("The folder does not exist");
+        }
+
         List<ResourceInfoDto> resources = folderService.getContent(userRootFolder + path);
         return ResponseEntity.ok(resources);
     }
