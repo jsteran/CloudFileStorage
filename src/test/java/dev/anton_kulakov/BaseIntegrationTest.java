@@ -1,17 +1,13 @@
 package dev.anton_kulakov;
 
 import dev.anton_kulakov.exception.MinioException;
-import io.minio.ListObjectsArgs;
-import io.minio.MinioClient;
-import io.minio.RemoveObjectsArgs;
-import io.minio.Result;
+import io.minio.*;
 import io.minio.messages.DeleteError;
 import io.minio.messages.DeleteObject;
 import io.minio.messages.Item;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
@@ -37,9 +33,10 @@ public class BaseIntegrationTest {
     private static final String MINIO_ACCESS_KEY = "minioadmin";
     private static final String MINIO_SECRET_KEY = "minioadmin";
 
-    private static final String testBucketName = "test-bucket";
-    private static GenericContainer<?> minio;
-    private static String minioUrl;
+    private static final String TEST_BUCKET_NAME_FOR_DYNAMIC_PROPERTIES = "test-bucket-name";
+
+    @Value("${minio.bucket-name}")
+    private String injectedBucketName;
 
     @Autowired
     private MinioClient minioClient;
@@ -47,25 +44,17 @@ public class BaseIntegrationTest {
     @Container
     private static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(DockerImageName.parse("postgres:latest"));
 
-    @BeforeAll
-    static void setUp() {
-        int port = 9000;
+    @Container
+    private static final GenericContainer<?> minio = new GenericContainer<>("minio/minio")
+            .withEnv("MINIO_ACCESS_KEY", MINIO_ACCESS_KEY)
+            .withEnv("MINIO_SECRET_KEY", MINIO_SECRET_KEY)
+            .withCommand("server /data")
+            .withExposedPorts(9000)
+            .waitingFor(new HttpWaitStrategy()
+                    .forPath("/minio/health/ready")
+                    .forPort(9000)
+                    .withStartupTimeout(Duration.ofSeconds(10)));
 
-        minio = new GenericContainer<>("minio/minio")
-                .withEnv("MINIO_ACCESS_KEY", MINIO_ACCESS_KEY)
-                .withEnv("MINIO_SECRET_KEY", MINIO_SECRET_KEY)
-                .withCommand("server /data")
-                .withExposedPorts(port)
-                .waitingFor(new HttpWaitStrategy()
-                        .forPath("/minio/health/ready")
-                        .forPort(port)
-                        .withStartupTimeout(Duration.ofSeconds(10)));
-
-        minio.start();
-        Integer mappedPort = minio.getFirstMappedPort();
-        org.testcontainers.Testcontainers.exposeHostPorts(mappedPort);
-        minioUrl = String.format("http://%s:%s", minio.getHost(), mappedPort);
-    }
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {
@@ -73,18 +62,32 @@ public class BaseIntegrationTest {
         registry.add("spring.datasource.username", postgres::getUsername);
         registry.add("spring.datasource.password", postgres::getPassword);
 
-        registry.add("minio.endpoint", () -> minioUrl);
+        registry.add("minio.endpoint", () -> String.format("http://%s:%s", minio.getHost(), minio.getFirstMappedPort()));
         registry.add("minio.access-key", () -> MINIO_ACCESS_KEY);
         registry.add("minio.secret-key", () -> MINIO_SECRET_KEY);
-        registry.add("minio.bucket-name", () -> testBucketName);
+        registry.add("minio.bucket-name", () -> TEST_BUCKET_NAME_FOR_DYNAMIC_PROPERTIES);
     }
 
     @BeforeEach
     void cleanUpFileStorage() {
+        try {
+            boolean isExists = minioClient.bucketExists(BucketExistsArgs.builder()
+                    .bucket(injectedBucketName)
+                    .build());
+
+            if (!isExists) {
+                minioClient.makeBucket(MakeBucketArgs.builder()
+                        .bucket(injectedBucketName)
+                        .build());
+            }
+        } catch (Exception e) {
+            throw new MinioException("Failed to ensure bucket '" + injectedBucketName + "' exists for cleanup. " + e);
+        }
+
         List<String> resourcesNames = new ArrayList<>();
 
         Iterable<Result<Item>> resources = minioClient.listObjects(ListObjectsArgs.builder()
-                .bucket(testBucketName)
+                .bucket(injectedBucketName)
                 .recursive(true)
                 .build());
 
@@ -92,33 +95,28 @@ public class BaseIntegrationTest {
             try {
                 resourcesNames.add(resource.get().objectName());
             } catch (Exception e) {
-                throw new MinioException("Failed to list objects");
+                throw new MinioException("Failed to list objects during cleanup. Bucket: " + injectedBucketName + " " + e);
             }
         }
 
-        List<DeleteObject> resourcesToDelete = resourcesNames.stream()
-                .map(DeleteObject::new)
-                .collect(Collectors.toList());
+        if (!resourcesNames.isEmpty()) {
+            List<DeleteObject> resourcesToDelete = resourcesNames.stream()
+                    .map(DeleteObject::new)
+                    .collect(Collectors.toList());
 
-        Iterable<Result<DeleteError>> results = minioClient.removeObjects(RemoveObjectsArgs.builder()
-                .bucket(testBucketName)
-                .objects(resourcesToDelete)
-                .build());
+            Iterable<Result<DeleteError>> results = minioClient.removeObjects(RemoveObjectsArgs.builder()
+                    .bucket(injectedBucketName)
+                    .objects(resourcesToDelete)
+                    .build());
 
-        for (Result<DeleteError> result : results) {
-            try {
-                DeleteError error = result.get();
-                System.err.println("Failed to delete: " + error.objectName() + " - " + error.message());
-            } catch (Exception e) {
-                throw new MinioException("Failed to process batch deletion result");
+            for (Result<DeleteError> result : results) {
+                try {
+                    DeleteError error = result.get();
+                    System.err.println("Failed to delete: " + error.objectName() + " - " + error.message());
+                } catch (Exception e) {
+                    throw new MinioException("Failed to process batch deletion result");
+                }
             }
-        }
-    }
-
-    @AfterAll
-    static void shutDown() {
-        if (minio.isRunning()) {
-            minio.stop();
         }
     }
 }
