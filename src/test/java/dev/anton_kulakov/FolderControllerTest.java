@@ -32,6 +32,7 @@ public class FolderControllerTest extends AbstractControllerIntegrationTest {
 
         mvc.perform(MockMvcRequestBuilders.get("/api/directory")
                         .param("path", "main_folder/"))
+                .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(jsonPath("$", instanceOf(List.class)))
                 .andExpect(jsonPath("$.length()", is(2)))

@@ -19,13 +19,21 @@ public class ResourceControllerTest extends AbstractControllerIntegrationTest {
     @Test
     @WithMockCustomUser
     void uploadFile_shouldReturnStatus201() {
+        String fileName = System.currentTimeMillis() + "-test-file.txt";
         String uploadRequestPath = "/api/resource";
-        MockMultipartFile file = createFile(System.currentTimeMillis() + "-test-file.txt", "");
+        MockMultipartFile file = createFile(fileName, "");
 
         mvc.perform(multipart(uploadRequestPath)
                         .file(file)
                         .param("path", ""))
-                .andExpect(status().isCreated());
+                .andExpect(status().isCreated())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(jsonPath("$", instanceOf(List.class)))
+                .andExpect(jsonPath("$.length()", is(1)))
+                .andExpect(jsonPath("$[0].path", is("user-1-files/")))
+                .andExpect(jsonPath("$[0].name", is(fileName)))
+                .andExpect(jsonPath("$[0].size", is(file.getBytes().length)))
+                .andExpect(jsonPath("$[0].type", is("FILE")));
     }
 
     @SneakyThrows
@@ -97,6 +105,34 @@ public class ResourceControllerTest extends AbstractControllerIntegrationTest {
 
     @SneakyThrows
     @Test
+    void uploadFile_withUnauthorizedUser_shouldReturnStatus401() {
+        String fileName = System.currentTimeMillis() + "-test-file.txt";
+        String uploadRequestPath = "/api/resource";
+        MockMultipartFile file = createFile(fileName, "");
+
+        mvc.perform(multipart(uploadRequestPath)
+                        .file(file)
+                        .param("path", ""))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @SneakyThrows
+    @Test
+    void uploadFolder_withUnauthorizedUser_shouldReturnStatus401() {
+        String mainFolderFileName = System.currentTimeMillis() + "-main-folder-file.txt";
+        String nestedFolderFileName = System.currentTimeMillis() + "-nested-folder-file.txt";
+        MockMultipartFile mainFolderFile = createFile(mainFolderFileName, "main_folder/");
+        MockMultipartFile nestedFolderFile = createFile(nestedFolderFileName, "main_folder/nested_folder/");
+
+        mvc.perform(multipart("/api/resource")
+                        .file(mainFolderFile)
+                        .file(nestedFolderFile)
+                        .param("path", ""))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @SneakyThrows
+    @Test
     @WithMockCustomUser
     void getFileInfo_shouldReturnStatus200() {
         String fileName = System.currentTimeMillis() + "-test-file.txt";
@@ -104,7 +140,12 @@ public class ResourceControllerTest extends AbstractControllerIntegrationTest {
         uploadFile(file, "");
 
         mvc.perform(get("/api/resource?path=" + fileName))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(jsonPath("$.path", is("user-1-files/")))
+                .andExpect(jsonPath("$.name", is(fileName)))
+                .andExpect(jsonPath("$.size", is(file.getBytes().length)))
+                .andExpect(jsonPath("$.type", is("FILE")));
     }
 
     @SneakyThrows
@@ -117,7 +158,11 @@ public class ResourceControllerTest extends AbstractControllerIntegrationTest {
         uploadFile(nestedFolderFile, "main_folder/");
 
         mvc.perform(get("/api/resource?path=main_folder/nested_folder/"))
-                .andExpect(status().isOk());
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(jsonPath("$.path", is("user-1-files/main_folder/nested_folder/")))
+                .andExpect(jsonPath("$.name", is("nested_folder/")))
+                .andExpect(jsonPath("$.type", is("DIRECTORY")));
     }
 
     @SneakyThrows
@@ -143,6 +188,29 @@ public class ResourceControllerTest extends AbstractControllerIntegrationTest {
 
         mvc.perform(get("/api/resource?path=/main_folder/^^$))"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @SneakyThrows
+    @Test
+    void getFileInfo_withUnauthorizedUser_shouldReturnStatus401() {
+        String fileName = System.currentTimeMillis() + "-test-file.txt";
+        MockMultipartFile file = createFile(fileName, "");
+        uploadFile(file, "");
+
+        mvc.perform(get("/api/resource?path=%^^&test-file.txt"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @SneakyThrows
+    @Test
+    void getFolderInfo_withUnauthorizedUser_shouldReturnStatus401() {
+        MockMultipartFile mainFolderFile = createFile(System.currentTimeMillis() + "-main-folder-file.txt", "main_folder/");
+        MockMultipartFile nestedFolderFile = createFile(System.currentTimeMillis() + "-nested-folder-file.txt", "nested_folder/");
+        uploadFile(mainFolderFile, "");
+        uploadFile(nestedFolderFile, "main_folder/");
+
+        mvc.perform(get("/api/resource?path=main_folder/"))
+                .andExpect(status().isUnauthorized());
     }
 
     @SneakyThrows
@@ -173,6 +241,7 @@ public class ResourceControllerTest extends AbstractControllerIntegrationTest {
                         .param("path", fileName))
                 .andExpect(status().isNoContent());
     }
+
 
     @SneakyThrows
     @Test
@@ -238,6 +307,31 @@ public class ResourceControllerTest extends AbstractControllerIntegrationTest {
         mvc.perform(MockMvcRequestBuilders.delete("/api/resource")
                         .param("path", "%$##&main_folder/"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @SneakyThrows
+    @Test
+    void deleteFile_withUnauthorizedUser_shouldReturnStatus401() {
+        String fileName = System.currentTimeMillis() + "-test-file.txt";
+        MockMultipartFile file = createFile(fileName, "");
+        uploadFile(file, "");
+
+        mvc.perform(MockMvcRequestBuilders.delete("/api/resource")
+                        .param("path", fileName))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @SneakyThrows
+    @Test
+    void deleteFolder_withUnauthorizedUser_shouldReturnStatus401() {
+        MockMultipartFile mainFolderFile = createFile(System.currentTimeMillis() + "-main-folder-file.txt", "main_folder/");
+        MockMultipartFile nestedFolderFile = createFile(System.currentTimeMillis() + "-nested-folder-file.txt", "nested_folder/");
+        uploadFile(mainFolderFile, "");
+        uploadFile(nestedFolderFile, "main_folder/");
+
+        mvc.perform(MockMvcRequestBuilders.delete("/api/resource")
+                        .param("path", "main_folder/"))
+                .andExpect(status().isUnauthorized());
     }
 
     @SneakyThrows
@@ -355,6 +449,51 @@ public class ResourceControllerTest extends AbstractControllerIntegrationTest {
 
     @SneakyThrows
     @Test
+    void downloadFile_withUnauthorizedUser_shouldReturnStatus401() {
+        String fileName = System.currentTimeMillis() + "-test-file.txt";
+        MockMultipartFile file = createFile(fileName, "");
+        uploadFile(file, "");
+
+        mvc.perform(get("/api/resource/download")
+                        .param("path", fileName))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @SneakyThrows
+    @Test
+    void downloadFolder_withUnauthorizedUser_shouldReturnStatus401() {
+        MockMultipartFile mainFolderFile = createFile(System.currentTimeMillis() + "-main-folder-file.txt", "main_folder/");
+        MockMultipartFile nestedFolderFile = createFile(System.currentTimeMillis() + "-nested-folder-file.txt", "nested_folder/");
+        uploadFile(mainFolderFile, "");
+        uploadFile(nestedFolderFile, "main_folder/");
+
+        mvc.perform(get("/api/resource/download")
+                        .param("path", "%%^&^))main_folder/"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void downloadNonExistentFile_shouldReturnStatus404() {
+        String fileName = System.currentTimeMillis() + "-test-file.txt";
+
+        mvc.perform(get("/api/resource/download")
+                        .param("path", fileName))
+                .andExpect(status().isNotFound());
+    }
+
+    @SneakyThrows
+    @Test
+    @WithMockCustomUser
+    void downloadNonExistentFolder_shouldReturnStatus404() {
+        mvc.perform(get("/api/resource/download")
+                        .param("path", "main_folder/"))
+                .andExpect(status().isNotFound());
+    }
+
+    @SneakyThrows
+    @Test
     @WithMockCustomUser
     void moveFile_shouldReturnStatus200() {
         String fileName = System.currentTimeMillis() + "-test-file.txt";
@@ -365,7 +504,11 @@ public class ResourceControllerTest extends AbstractControllerIntegrationTest {
                         .param("from", fileName)
                         .param("to", "new folder/" + fileName))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE));
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(jsonPath("$.path", is("user-1-files/new folder/")))
+                .andExpect(jsonPath("$.name", is(fileName)))
+                .andExpect(jsonPath("$.size", is(file.getBytes().length)))
+                .andExpect(jsonPath("$.type", is("FILE")));
     }
 
     @SneakyThrows
@@ -380,7 +523,11 @@ public class ResourceControllerTest extends AbstractControllerIntegrationTest {
                         .param("from", fileName)
                         .param("to", "-new-" + fileName))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE));
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(jsonPath("$.path", is("user-1-files/")))
+                .andExpect(jsonPath("$.name", is("-new-" + fileName)))
+                .andExpect(jsonPath("$.size", is(file.getBytes().length)))
+                .andExpect(jsonPath("$.type", is("FILE")));
     }
 
     @SneakyThrows
@@ -396,7 +543,11 @@ public class ResourceControllerTest extends AbstractControllerIntegrationTest {
                         .param("from", "main_folder/nested_folder/")
                         .param("to", "nested_folder/"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE));
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(jsonPath("$.path", is("user-1-files/nested_folder/")))
+                .andExpect(jsonPath("$.name", is("nested_folder/")))
+                .andExpect(jsonPath("$.type", is("DIRECTORY")));
+
     }
 
     @SneakyThrows
@@ -412,7 +563,10 @@ public class ResourceControllerTest extends AbstractControllerIntegrationTest {
                         .param("from", "main_folder/")
                         .param("to", "new main folder/"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE));
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
+                .andExpect(jsonPath("$.path", is("user-1-files/new main folder/")))
+                .andExpect(jsonPath("$.name", is("new main folder/")))
+                .andExpect(jsonPath("$.type", is("DIRECTORY")));
     }
 
     @SneakyThrows
@@ -525,6 +679,33 @@ public class ResourceControllerTest extends AbstractControllerIntegrationTest {
                         .param("from", "main_folder/")
                         .param("to", "%^$#new main folder/"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @SneakyThrows
+    @Test
+    void renameFile_withUnauthorizedUser_shouldReturnStatus401() {
+        String fileName = System.currentTimeMillis() + "-test-file.txt";
+        MockMultipartFile file = createFile(fileName, "");
+        uploadFile(file, "");
+
+        mvc.perform(get("/api/resource/move")
+                        .param("from", fileName)
+                        .param("to", fileName))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @SneakyThrows
+    @Test
+    void renameFolder_withUnauthorizedUser_shouldReturnStatus401() {
+        MockMultipartFile mainFolderFile = createFile(System.currentTimeMillis() + "-main-folder-file.txt", "main_folder/");
+        MockMultipartFile nestedFolderFile = createFile(System.currentTimeMillis() + "-nested-folder-file.txt", "nested_folder/");
+        uploadFile(mainFolderFile, "");
+        uploadFile(nestedFolderFile, "main_folder/");
+
+        mvc.perform(get("/api/resource/move")
+                        .param("from", "main_folder/")
+                        .param("to", "new main folder/"))
+                .andExpect(status().isUnauthorized());
     }
 
     @SneakyThrows
@@ -676,7 +857,7 @@ public class ResourceControllerTest extends AbstractControllerIntegrationTest {
     @SneakyThrows
     @Test
     @WithMockCustomUser
-    void searchFolder_withEmptyQuery_shouldReturnStatus200() {
+    void searchFolder_withEmptyQuery_shouldReturnStatus400() {
         mvc.perform(post("/api/directory")
                 .param("path", "folder/"));
 
@@ -685,5 +866,34 @@ public class ResourceControllerTest extends AbstractControllerIntegrationTest {
 
         mvc.perform(get("/api/resource/search"))
                 .andExpect(status().isBadRequest());
+    }
+
+    @SneakyThrows
+    @Test
+    void searchFile_withUnauthorizedUser_shouldReturnStatus401() {
+        String firstFileName = System.currentTimeMillis() + "-first-file.txt";
+        String secondFileName = System.currentTimeMillis() + "-second-file.txt";
+        MockMultipartFile firstFile = createFile(firstFileName, "");
+        MockMultipartFile secondFile = createFile(secondFileName, "nested_folder/");
+        uploadFile(firstFile, "");
+        uploadFile(secondFile, "");
+
+        mvc.perform(get("/api/resource/search")
+                        .param("query", "first"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @SneakyThrows
+    @Test
+    void searchFolder_withUnauthorizedUser_shouldReturnStatus401() {
+        mvc.perform(post("/api/directory")
+                .param("path", "folder/"));
+
+        mvc.perform(post("/api/directory")
+                .param("path", "folder/nested folder/"));
+
+        mvc.perform(get("/api/resource/search")
+                        .param("query", "nes"))
+                .andExpect(status().isUnauthorized());
     }
 }
