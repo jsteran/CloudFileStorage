@@ -6,6 +6,7 @@ import io.minio.messages.DeleteError;
 import io.minio.messages.DeleteObject;
 import io.minio.messages.Item;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -13,11 +14,10 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.wait.strategy.HttpWaitStrategy;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-@Testcontainers
+@ExtendWith(SpringExtension.class)
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
@@ -41,20 +41,30 @@ public class BaseIntegrationTest {
     @Autowired
     private MinioClient minioClient;
 
-    @Container
-    private static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>(DockerImageName.parse("postgres:latest"));
+    protected static final PostgreSQLContainer<?> postgres;
+    protected static final GenericContainer<?> minio;
 
-    @Container
-    private static final GenericContainer<?> minio = new GenericContainer<>("minio/minio")
-            .withEnv("MINIO_ACCESS_KEY", MINIO_ACCESS_KEY)
-            .withEnv("MINIO_SECRET_KEY", MINIO_SECRET_KEY)
-            .withCommand("server /data")
-            .withExposedPorts(9000)
-            .waitingFor(new HttpWaitStrategy()
-                    .forPath("/minio/health/ready")
-                    .forPort(9000)
-                    .withStartupTimeout(Duration.ofSeconds(10)));
+    static {
+        postgres = new PostgreSQLContainer<>(DockerImageName.parse("postgres:latest"));
+        postgres.start();
 
+        minio = new GenericContainer<>("minio/minio")
+                .withEnv("MINIO_ACCESS_KEY", MINIO_ACCESS_KEY)
+                .withEnv("MINIO_SECRET_KEY", MINIO_SECRET_KEY)
+                .withCommand("server /data")
+                .withExposedPorts(9000)
+                .waitingFor(new HttpWaitStrategy()
+                        .forPath("/minio/health/ready")
+                        .forPort(9000)
+                        .withStartupTimeout(Duration.ofSeconds(10)));
+
+        minio.start();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            if (minio.isRunning()) minio.stop();
+            if (postgres.isRunning()) postgres.stop();
+        }));
+    }
 
     @DynamicPropertySource
     static void configureProperties(DynamicPropertyRegistry registry) {

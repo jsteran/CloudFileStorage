@@ -1,0 +1,19 @@
+<configuration>
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="org.springframework.test.context.cache" level="DEBUG"/>
+    <logger name="org.springframework.test.context.support.DefaultTestContextBootstrapper" level="DEBUG"/>
+    <logger name="org.springframework.test.context.TestContextManager" level="DEBUG"/>
+    <logger name="org.testcontainers" level="DEBUG"/>
+    <logger name="org.springframework" level="INFO"/>
+    <logger name="dev.anton_kulakov" level="INFO"/>
+    <root level="INFO">
+        <appender-ref ref="STDOUT" />
+    </root>
+
+</configuration>
