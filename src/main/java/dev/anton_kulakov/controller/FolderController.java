@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,6 +28,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/directory")
@@ -125,6 +127,7 @@ public class FolderController {
         String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
 
         if (!folderResourceHandler.isExists(userRootFolder + path)) {
+            log.error("The folder with path {} does not exist", userRootFolder + path);
             throw new ResourceNotFoundException("The folder does not exist");
         }
 
@@ -250,10 +253,12 @@ public class FolderController {
         String parentFolderPath = pathProcessor.getPathWithoutLastFolder(fullPath, newFolderName);
 
         if (!parentFolderPath.equals(userRootFolder) && !minioService.isFolderExists(parentFolderPath)) {
+            log.error("The parent folder with name {} does not exist", parentFolderPath);
             throw new ResourceNotFoundException("The parent folder doesn't exists");
         }
 
         if (minioService.isFolderExists(fullPath)) {
+            log.error("The folder with path {} is already exists", fullPath);
             throw new ResourceAlreadyExistsException("The folder with the path %s is already exists".formatted(fullPath));
         }
 

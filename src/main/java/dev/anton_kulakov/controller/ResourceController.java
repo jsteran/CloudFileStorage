@@ -21,6 +21,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -32,6 +33,7 @@ import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBo
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequiredArgsConstructor
 @Validated
@@ -593,6 +595,7 @@ public class ResourceController {
             ResourceHandlerInterface resourceHandler = resourceHandlerFactory.getResourceHandler(fullPath);
 
             if (resourceHandler.isExists(fullPath)) {
+                log.error("The file with the path {} is already exists", fullPath);
                 throw new ResourceAlreadyExistsException("The file with the path %s is already exists".formatted(fullPath));
             }
 
