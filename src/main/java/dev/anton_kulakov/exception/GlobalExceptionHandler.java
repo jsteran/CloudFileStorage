@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
 import java.util.List;
@@ -71,6 +72,13 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorMessage handleUsernameAlreadyTakenException(UsernameAlreadyTakenException e) {
         return new ErrorMessage(e.getMessage());
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorMessage handleMaxUploadSizeExceededException(MaxUploadSizeExceededException e) {
+        long maxUploadSize = e.getMaxUploadSize();
+        return new ErrorMessage("File or folder size exceeds limit " + maxUploadSize);
     }
 
     @ExceptionHandler(Exception.class)
