@@ -7,12 +7,14 @@ import dev.anton_kulakov.util.PathProcessor;
 import io.minio.messages.DeleteObject;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class FolderService {
@@ -22,6 +24,7 @@ public class FolderService {
 
     public ResourceInfoDto getInfo(String path) {
         if (!minioService.isFolderExists(path)) {
+            log.error("The folder with path {} does not exist", path);
             throw new ResourceNotFoundException("The folder with the path %s could not be found".formatted(path));
         }
 
@@ -34,6 +37,7 @@ public class FolderService {
                 .collect(Collectors.toList());
 
         if (resourcesInFolder.isEmpty()) {
+            log.error("The folder with path {} is empty or does not exist", path);
             throw new ResourceNotFoundException("Folder is empty or does not exist");
         }
 

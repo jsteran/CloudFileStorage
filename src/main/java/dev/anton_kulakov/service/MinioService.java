@@ -8,6 +8,7 @@ import io.minio.messages.DeleteObject;
 import io.minio.messages.Item;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,6 +18,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class MinioService {
@@ -38,6 +40,7 @@ public class MinioService {
                         .build());
             }
         } catch (Exception e) {
+            log.error("Failed to create or verify bucket '{}'", bucketName, e);
             throw new MinioException("There is an issue when verifying the existence of the bucket");
         }
 
@@ -50,6 +53,7 @@ public class MinioService {
                     .object(path)
                     .build());
         } catch (Exception e) {
+            log.error("Failed to retrieve metadata for object in bucket '{}'. Path: '{}'", bucketName, path, e);
             throw new MinioException("Failed to retrieve object metadata");
         }
     }
@@ -67,7 +71,7 @@ public class MinioService {
             try {
                 results.add(object.get());
             } catch (Exception e) {
-                throw new MinioException("Failed to list objects");
+                log.warn("Could not retrieve one of the items in bucket '{}' with path '{}'. Skipping it.", bucketName, path, e);
             }
         }
 
@@ -81,6 +85,7 @@ public class MinioService {
                     .object(path)
                     .build());
         } catch (Exception e) {
+            log.error("Failed to remove object with path '{}' from bucket '{}'", path, bucketName, e);
             throw new MinioException("Failed to remove object");
         }
     }
@@ -94,8 +99,9 @@ public class MinioService {
         for (Result<DeleteError> result : results) {
             try {
                 DeleteError error = result.get();
-                System.err.println("Failed to delete: " + error.objectName() + " - " + error.message());
+                log.warn("Failed to delete object '{}' in bucket '{}'. Reason: {}", error.objectName(), error.bucketName(), error.message());
             } catch (Exception e) {
+                log.error("A critical error occurred during batch deletion from bucket '{}'", bucketName, e);
                 throw new MinioException("Failed to process batch deletion result");
             }
         }
@@ -111,8 +117,17 @@ public class MinioService {
                             .object(from)
                             .build())
                     .build());
+
+            log.info("Successfully copied object from '{}' to '{}' in bucket '{}'", from, to, bucketName);
         } catch (Exception e) {
-            removeObject(to);
+            log.error("Failed to copy object from '{}' to '{}' in bucket '{}'", from, to, bucketName, e);
+
+            try {
+                removeObject(to);
+            } catch (Exception ex) {
+                log.error("CRITICAL: Failed to clean up destination object '{}' after a copy error. Manual intervention may be required.", to, ex);
+            }
+
             throw new MinioException("Failed to copy object");
         }
     }
@@ -124,6 +139,7 @@ public class MinioService {
                     .object(resourceName)
                     .build());
         } catch (Exception e) {
+            log.error( "Failed to get object '{}' from bucket '{}'", resourceName, bucketName, e);
             throw new MinioException("Failed to get input stream");
         }
     }
@@ -137,6 +153,10 @@ public class MinioService {
                     .contentType(file.getContentType())
                     .build());
         } catch (Exception e) {
+            log.error("Failed to upload file '{}' to path '{}' in bucket '{}'",
+                    file.getOriginalFilename(),
+                    path + file.getOriginalFilename(),
+                    bucketName, e);
             throw new MinioException("Failed to upload file");
         }
     }
@@ -151,11 +171,14 @@ public class MinioService {
         } catch (ErrorResponseException e) {
             if ("NoSuchKey".equals(e.errorResponse().code()) ||
                 "NoSuchObject".equals(e.errorResponse().code())) {
+                log.trace("File '{}' does not exist in bucket '{}' (NoSuchKey/NoSuchObject).", path, bucketName);
                 return false;
             }
 
+            log.error("An unexpected MinIO error occurred while checking existence of '{}' in bucket '{}'", path, bucketName, e);
             throw new MinioException("Error checking existence of file");
         } catch (Exception e) {
+            log.error("A general error occurred while checking existence of '{}' in bucket '{}'", path, bucketName, e);
             throw new MinioException("Failed to check if file exists");
         }
     }
@@ -178,6 +201,7 @@ public class MinioService {
                     .stream(new ByteArrayInputStream(new byte[0]), 0, -1)
                     .build());
         } catch (Exception e) {
+            log.error("Failed to create empty folder '{}' in bucket '{}'", path, bucketName, e);
             throw new MinioException("Failed to create empty folder");
         }
     }

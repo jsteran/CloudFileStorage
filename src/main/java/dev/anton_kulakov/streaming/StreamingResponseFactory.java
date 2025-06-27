@@ -5,12 +5,14 @@ import dev.anton_kulakov.service.FolderService;
 import dev.anton_kulakov.service.MinioService;
 import dev.anton_kulakov.util.PathProcessor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.util.List;
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class StreamingResponseFactory {
@@ -24,6 +26,7 @@ public class StreamingResponseFactory {
             List<String> resourcesInFolder = folderService.getResourcesNamesInFolder(path);
 
             if (resourcesInFolder.isEmpty()) {
+                log.error("Folder '{}' is empty", path);
                 throw new ResourceNotFoundException("Folder is empty");
             }
 

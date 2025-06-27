@@ -4,6 +4,7 @@ import dev.anton_kulakov.exception.BaseAppException;
 import dev.anton_kulakov.service.MinioService;
 import dev.anton_kulakov.util.PathProcessor;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+@Slf4j
 @RequiredArgsConstructor
 public class FolderStreamingResponseBody implements StreamingResponseBody {
     private final MinioService minioService;
@@ -30,6 +32,7 @@ public class FolderStreamingResponseBody implements StreamingResponseBody {
                 addResourceToZip(zipOut, resource);
             }
         } catch (IOException e) {
+            log.error("Failed to add resource to ZIP archive.", e);
             throw new BaseAppException("Failed to create ZIP archive");
         }
     }
@@ -45,6 +48,7 @@ public class FolderStreamingResponseBody implements StreamingResponseBody {
                 streamCopier.copyStream(inputStream, zipOut, bufferSize);
             }
         } catch (IOException e) {
+            log.error("Failed to add resource '{}' to ZIP archive", fullResourceName, e);
             throw new BaseAppException("Failed to add resource to ZIP: %s".formatted(fullResourceName));
         }
 
