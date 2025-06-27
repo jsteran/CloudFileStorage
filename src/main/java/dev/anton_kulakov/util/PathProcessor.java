@@ -1,10 +1,12 @@
 package dev.anton_kulakov.util;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
 import java.util.List;
 
+@Slf4j
 @Component
 public class PathProcessor {
     public String getLastFolderName(String path) {
@@ -33,6 +35,7 @@ public class PathProcessor {
         try {
             splitObjectName = objectName.split("/");
         } catch (Exception e) {
+            log.error("Failed to split object name '{}' due to an unexpected exception", objectName, e);
             throw new RuntimeException(e);
         }
 
