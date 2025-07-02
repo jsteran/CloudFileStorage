@@ -242,26 +242,26 @@ public class FolderController {
     @PostMapping
     public ResponseEntity<ResourceInfoDto> create(
             @AuthenticationPrincipal SecurityUser securityUser,
+            @FullPath("path")
             @ValidPath
-            @RequestParam
             @Parameter(description = "The path where the new folder will be created", example = "folder/new folder/") String path) {
         String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
-        String fullPath = userRootFolder + path;
-        String newFolderName = pathProcessor.getLastFolderName(fullPath);
-        String parentFolderPath = pathProcessor.getPathWithoutLastFolder(fullPath, newFolderName);
+        String newFolderName = pathProcessor.getLastFolderName(path);
+        String parentFolderPath = pathProcessor.getPathWithoutLastFolder(path, newFolderName);
 
         if (!parentFolderPath.equals(userRootFolder) && !minioService.isFolderExists(parentFolderPath)) {
             log.error("The parent folder with name {} does not exist", parentFolderPath);
             throw new ResourceNotFoundException("The parent folder doesn't exists");
         }
 
-        if (minioService.isFolderExists(fullPath)) {
-            log.error("The folder with path {} is already exists", fullPath);
-            throw new ResourceAlreadyExistsException("The folder with the path %s is already exists".formatted(fullPath));
+        if (minioService.isFolderExists(path)) {
+            log.error("The folder with path {} is already exists", path);
+            throw new ResourceAlreadyExistsException("The folder with the path %s is already exists".formatted(path));
         }
 
-        minioService.createEmptyFolder(fullPath);
-        ResourceInfoDto resourceInfoDto = folderService.getInfo(fullPath);
+        minioService.createEmptyFolder(path);
+        ResourceInfoDto resourceInfoDto = folderService.getInfo(path);
+
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(resourceInfoDto);
