@@ -59,14 +59,6 @@ public class PathProcessor {
         return "user-" + userId + "-files/";
     }
 
-    public String getPathWithUserRootFolder(String path, String userRootFolder) {
-        if (!path.contains(userRootFolder)) {
-            path = userRootFolder + path;
-        }
-
-        return path;
-    }
-
     public String getPathWithoutLastFolder(String fullPath, String folderName) {
         int fullPathLength = fullPath.length();
         int folderNameLength = folderName.length();

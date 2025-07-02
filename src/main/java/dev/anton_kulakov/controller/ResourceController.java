@@ -10,7 +10,6 @@ import dev.anton_kulakov.service.ResourceSearchService;
 import dev.anton_kulakov.service.handler.ResourceHandlerFactory;
 import dev.anton_kulakov.service.handler.ResourceHandlerInterface;
 import dev.anton_kulakov.streaming.StreamingResponseFactory;
-import dev.anton_kulakov.util.PathProcessor;
 import dev.anton_kulakov.validation.ValidPath;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -43,7 +42,6 @@ public class ResourceController {
     public final ResourceHandlerFactory resourceHandlerFactory;
     private final ResourceSearchService resourceSearchService;
     private final StreamingResponseFactory streamingResponseFactory;
-    private final PathProcessor pathProcessor;
 
     @Operation(
             summary = "Getting information about a file or folder",
@@ -487,8 +485,7 @@ public class ResourceController {
             @AuthenticationPrincipal SecurityUser securityUser,
             @RequestParam
             @Parameter(description = "The name of the folder or file the user is searching for", example = "picture") String query) {
-        String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
-        List<ResourceInfoDto> resources = resourceSearchService.search(userRootFolder, query.toLowerCase());
+        List<ResourceInfoDto> resources = resourceSearchService.search(securityUser.getUserId(), query.toLowerCase());
         return ResponseEntity.ok().body(resources);
     }
 
