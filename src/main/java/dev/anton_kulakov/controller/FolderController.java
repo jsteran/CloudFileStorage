@@ -1,6 +1,7 @@
 package dev.anton_kulakov.controller;
 
 import dev.anton_kulakov.config.OpenApiConfig;
+import dev.anton_kulakov.config.resolver.FullPath;
 import dev.anton_kulakov.dto.ErrorMessage;
 import dev.anton_kulakov.dto.ResourceInfoDto;
 import dev.anton_kulakov.exception.ResourceAlreadyExistsException;
@@ -120,18 +121,15 @@ public class FolderController {
     })
     @GetMapping
     public ResponseEntity<List<ResourceInfoDto>> getFolderContent(
-            @AuthenticationPrincipal SecurityUser securityUser,
             @ValidPath
-            @RequestParam
+            @FullPath("path")
             @Parameter(description = "The path to the folder containing the content the user is interested in", example = "folder/") String path) {
-        String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
-
-        if (!folderResourceHandler.isExists(userRootFolder + path)) {
-            log.error("The folder with path {} does not exist", userRootFolder + path);
+        if (!folderResourceHandler.isExists(path)) {
+            log.error("The folder with path {} does not exist", path);
             throw new ResourceNotFoundException("The folder does not exist");
         }
 
-        List<ResourceInfoDto> resources = folderService.getContent(userRootFolder + path);
+        List<ResourceInfoDto> resources = folderService.getContent(path);
         return ResponseEntity.ok(resources);
     }
 
