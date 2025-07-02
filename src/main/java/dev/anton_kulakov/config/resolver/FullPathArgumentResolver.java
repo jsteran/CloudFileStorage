@@ -46,14 +46,22 @@ public class FullPathArgumentResolver implements HandlerMethodArgumentResolver {
         }
 
         String userRootFolder = USER_ROOT_FOLDER_TEMPLATE.formatted(securityUser.getUserId());
-        Path fullPath = Paths.get(userRootFolder, pathFromRequest).normalize();
+        Path pathToBeNormalized;
 
-        if (!fullPath.startsWith(userRootFolder)) {
+        if (pathFromRequest.startsWith(userRootFolder)) {
+            pathToBeNormalized = Path.of(pathFromRequest);
+        } else {
+            pathToBeNormalized = Paths.get(userRootFolder, pathFromRequest);
+        }
+
+        Path normalizedFullPath = pathToBeNormalized.normalize();
+
+        if (!normalizedFullPath.startsWith(userRootFolder)) {
             log.warn("Path Traversal attempt detected from user {} for path {}", securityUser.getUserId(), pathFromRequest);
             throw new AccessDeniedException("Path Traversal attempt detected for path %s".formatted(pathFromRequest));
         }
 
-        String fullPathString = fullPath.toString().replace('\\', '/');
+        String fullPathString = normalizedFullPath.toString().replace('\\', '/');
 
         if (pathFromRequest.isEmpty() || pathFromRequest.endsWith("/")) {
             fullPathString += "/";
