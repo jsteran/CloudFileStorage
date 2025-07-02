@@ -1,6 +1,7 @@
 package dev.anton_kulakov.controller;
 
 import dev.anton_kulakov.config.OpenApiConfig;
+import dev.anton_kulakov.config.resolver.FullPath;
 import dev.anton_kulakov.dto.ErrorMessage;
 import dev.anton_kulakov.dto.ResourceInfoDto;
 import dev.anton_kulakov.exception.ResourceAlreadyExistsException;
@@ -126,14 +127,12 @@ public class ResourceController {
     })
     @GetMapping("/api/resource")
     public ResponseEntity<ResourceInfoDto> getInfo(
-            @AuthenticationPrincipal SecurityUser securityUser,
+            @FullPath("path")
             @ValidPath
-            @RequestParam
             @Parameter(description = "The path to the folder or file", example = "folder/file.txt") String path) {
-        String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
-        String fullPath = userRootFolder + path;
-        ResourceHandlerInterface resourceHandler = resourceHandlerFactory.getResourceHandler(fullPath);
-        ResourceInfoDto resourceInfoDto = resourceHandler.getInfo(fullPath);
+        ResourceHandlerInterface resourceHandler = resourceHandlerFactory.getResourceHandler(path);
+        ResourceInfoDto resourceInfoDto = resourceHandler.getInfo(path);
+
         return ResponseEntity.ok().body(resourceInfoDto);
     }
 
@@ -217,13 +216,11 @@ public class ResourceController {
     })
     @GetMapping("/api/resource/download")
     public ResponseEntity<StreamingResponseBody> download(
-            @AuthenticationPrincipal SecurityUser securityUser,
+            @FullPath("path")
             @ValidPath
-            @RequestParam
             @Parameter(description = "The path to the folder or file you want to download", example = "folder/file.txt") String path) {
-        String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
-        path = pathProcessor.getPathWithUserRootFolder(path, userRootFolder);
         resourceHandlerFactory.getResourceHandler(path).getInfo(path);
+
         return ResponseEntity.ok()
                 .contentType(streamingResponseFactory.getContentType(path))
                 .body(streamingResponseFactory.createResponse(path));
@@ -305,14 +302,12 @@ public class ResourceController {
     })
     @DeleteMapping("/api/resource")
     public ResponseEntity<Void> delete(
-            @AuthenticationPrincipal SecurityUser securityUser,
+            @FullPath("path")
             @ValidPath
-            @RequestParam
             @Parameter(description = "The path to the folder or file that you want to delete", example = "folder/file.txt") String path) {
-        String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
-        path = pathProcessor.getPathWithUserRootFolder(path, userRootFolder);
         ResourceHandlerInterface resourceHandler = resourceHandlerFactory.getResourceHandler(path);
         resourceHandler.delete(path);
+
         return ResponseEntity.noContent().build();
     }
 
@@ -413,19 +408,16 @@ public class ResourceController {
     })
     @GetMapping("/api/resource/move")
     public ResponseEntity<ResourceInfoDto> move(
-            @AuthenticationPrincipal SecurityUser securityUser,
+            @FullPath("from")
             @ValidPath
-            @RequestParam
             @Parameter(description = "The path to the folder or file that we want to rename or move", example = "folder/file.txt") String from,
+            @FullPath("to")
             @ValidPath
-            @RequestParam
             @Parameter(description = "The new path to the folder or file that we are moving or renaming", example = "folder/new_file.txt") String to) {
-        String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
-        String fromPath = pathProcessor.getPathWithUserRootFolder(from, userRootFolder);
-        String toPath = pathProcessor.getPathWithUserRootFolder(to, userRootFolder);
-        ResourceHandlerInterface resourceHandler = resourceHandlerFactory.getResourceHandler(fromPath);
-        resourceHandler.move(fromPath, toPath);
-        ResourceInfoDto resourceInfoDto = resourceHandler.getInfo(toPath);
+        ResourceHandlerInterface resourceHandler = resourceHandlerFactory.getResourceHandler(from);
+        resourceHandler.move(from, to);
+        ResourceInfoDto resourceInfoDto = resourceHandler.getInfo(to);
+
         return ResponseEntity.ok().body(resourceInfoDto);
     }
 
@@ -580,18 +572,16 @@ public class ResourceController {
     })
     @PostMapping("/api/resource")
     public ResponseEntity<List<ResourceInfoDto>> upload(
-            @AuthenticationPrincipal SecurityUser securityUser,
+            @FullPath("path")
             @ValidPath
-            @RequestParam
             @Parameter(description = "The path to the folder where the files or the other folder will be uploaded", example = "folder/") String path,
             @Size(min = 1)
             @RequestParam("object")
             @Parameter(description = "list of files to download") List<MultipartFile> files) {
-        String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
         List<ResourceInfoDto> resourceInfoDtos = new ArrayList<>();
 
         for (MultipartFile file : files) {
-            String fullPath = userRootFolder + path + file.getOriginalFilename();
+            String fullPath = path + file.getOriginalFilename();
             ResourceHandlerInterface resourceHandler = resourceHandlerFactory.getResourceHandler(fullPath);
 
             if (resourceHandler.isExists(fullPath)) {
@@ -599,7 +589,7 @@ public class ResourceController {
                 throw new ResourceAlreadyExistsException("The file with the path %s is already exists".formatted(fullPath));
             }
 
-            ResourceInfoDto resourceInfoDto = resourceHandler.upload(userRootFolder + path, file);
+            ResourceInfoDto resourceInfoDto = resourceHandler.upload(path, file);
             resourceInfoDtos.add(resourceInfoDto);
         }
 
