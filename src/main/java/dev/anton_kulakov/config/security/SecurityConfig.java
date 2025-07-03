@@ -42,11 +42,16 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/index.html", "/config.js", "/assets/*").permitAll()
+                        .requestMatchers("/",
+                                "/index.html",
+                                "/files/**",
+                                "/config.js",
+                                "/assets/**",
+                                "/favicon.ico",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/swagger-ui.html").permitAll()
-                        .requestMatchers("/swagger-ui/**").permitAll()
-                        .requestMatchers("/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(exceptions -> exceptions
                         .authenticationEntryPoint(new CustomAuthenticationEntryPoint(objectMapper)))
