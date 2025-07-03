@@ -1,6 +1,7 @@
 package dev.anton_kulakov.config.resolver;
 
 import dev.anton_kulakov.model.SecurityUser;
+import dev.anton_kulakov.util.PathProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +22,7 @@ import java.nio.file.Paths;
 @Component
 @RequiredArgsConstructor
 public class FullPathArgumentResolver implements HandlerMethodArgumentResolver {
-    private final static String USER_ROOT_FOLDER_TEMPLATE = "user-%s-files/";
+    private final PathProcessor pathProcessor;
 
     @Override
     public boolean supportsParameter(MethodParameter parameter) {
@@ -45,7 +46,7 @@ public class FullPathArgumentResolver implements HandlerMethodArgumentResolver {
             return null;
         }
 
-        String userRootFolder = USER_ROOT_FOLDER_TEMPLATE.formatted(securityUser.getUserId());
+        String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
         Path pathToBeNormalized;
 
         if (pathFromRequest.startsWith(userRootFolder)) {

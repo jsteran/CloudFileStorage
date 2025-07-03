@@ -38,9 +38,9 @@ public class RegistrationController {
     private final UserService userService;
     private final UserMapper userMapper;
     private final MinioService minioService;
-    private final PathProcessor pathProcessor;
     private final UserDetailsServiceImpl userDetailsServiceImpl;
     private final SecurityContextUtil securityContextUtil;
+    private final PathProcessor pathProcessor;
 
     @Operation(summary = "Creating a new user")
     @ApiResponses(value = {

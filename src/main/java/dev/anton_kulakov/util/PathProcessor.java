@@ -1,6 +1,7 @@
 package dev.anton_kulakov.util;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -9,6 +10,12 @@ import java.util.List;
 @Slf4j
 @Component
 public class PathProcessor {
+    private final String userRootFolderTemplate;
+
+    public PathProcessor(@Value("${application.storage.user-root-folder-template}") String userRootFolderTemplate) {
+        this.userRootFolderTemplate = userRootFolderTemplate;
+    }
+
     public String getLastFolderName(String path) {
         if (path == null || path.isBlank()) {
             return "";
@@ -56,7 +63,7 @@ public class PathProcessor {
     }
 
     public String getUserRootFolder(int userId) {
-        return "user-" + userId + "-files/";
+        return userRootFolderTemplate.formatted(userId);
     }
 
     public String getPathWithoutLastFolder(String fullPath, String folderName) {

@@ -16,10 +16,9 @@ public class ResourceSearchService {
     private final PathProcessor pathProcessor;
     private final MinioService minioService;
     private final ResourceMapper resourceMapper;
-    private final static String USER_ROOT_FOLDER_TEMPLATE = "user-%s-files/";
 
     public List<ResourceInfoDto> search(int userId, String query) {
-        String userRootFolder = USER_ROOT_FOLDER_TEMPLATE.formatted(userId);
+        String userRootFolder = pathProcessor.getUserRootFolder(userId);
         List<String> foldersToSearch = new ArrayList<>();
         List<ResourceInfoDto> resourcesFound = new ArrayList<>();
         foldersToSearch.add(userRootFolder);
