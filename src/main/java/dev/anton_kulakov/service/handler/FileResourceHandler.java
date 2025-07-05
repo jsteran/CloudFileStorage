@@ -1,6 +1,7 @@
 package dev.anton_kulakov.service.handler;
 
 import dev.anton_kulakov.dto.ResourceInfoDto;
+import dev.anton_kulakov.exception.InvalidMoveOperationException;
 import dev.anton_kulakov.exception.ResourceAlreadyExistsException;
 import dev.anton_kulakov.exception.ResourceNotFoundException;
 import dev.anton_kulakov.mapper.ResourceMapper;
@@ -39,6 +40,11 @@ public class FileResourceHandler implements ResourceHandlerInterface {
 
     @Override
     public void move(String from, String to) {
+        if (!isDestinationPathValid(to)) {
+            log.error("The destination path {} for file {} is invalid", to, from);
+            throw new InvalidMoveOperationException("The destination path for file is invalid");
+        }
+
         if (!minioService.isFileExists(from)) {
             log.error("The requested file with path {} could not be found", from);
             throw new ResourceNotFoundException("The requested file could not be found");
@@ -51,6 +57,10 @@ public class FileResourceHandler implements ResourceHandlerInterface {
 
         minioService.copy(from, to);
         minioService.removeObject(from);
+    }
+
+    public boolean isDestinationPathValid(String to) {
+        return !to.endsWith("/");
     }
 
     @Override

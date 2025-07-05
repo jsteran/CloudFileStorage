@@ -56,6 +56,12 @@ public class GlobalExceptionHandler {
         return new ErrorMessage(e.getMessage());
     }
 
+    @ExceptionHandler(InvalidMoveOperationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorMessage handleInvalidMoveOperationException(InvalidMoveOperationException e) {
+        return new ErrorMessage(e.getMessage());
+    }
+
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorMessage handleConstraintViolationException(ConstraintViolationException e) {
