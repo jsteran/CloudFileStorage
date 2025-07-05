@@ -3,17 +3,85 @@ package dev.anton_kulakov.validation;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
-import java.util.regex.Pattern;
+import java.text.Normalizer;
 
 public class ResourcePathValidator implements ConstraintValidator<ValidPath, String> {
-    public final static Pattern PATH_VALIDATION_PATTERN = Pattern.compile("^(|(/)?([a-zA-Zа-яА-Я0-9_. ()-]+(?:/[a-zA-Zа-яА-Я0-9_. ()-]+)*)(/)?)$");
-
     @Override
     public boolean isValid(String path, ConstraintValidatorContext constraintValidatorContext) {
         if (path == null) {
+            addViolation(constraintValidatorContext, "Path cannot be null");
             return false;
         }
 
-        return PATH_VALIDATION_PATTERN.matcher(path).matches();
+        String normalizedPath = Normalizer.normalize(path, Normalizer.Form.NFC);
+
+        if (normalizedPath.contains("\\")) {
+            addViolation(constraintValidatorContext, "Backslashes are not allowed in path; use forward slashes (/) instead");
+            return false;
+        }
+
+        if (normalizedPath.contains("//")) {
+            addViolation(constraintValidatorContext, "Path can't contain consecutive slashes (//)");
+            return false;
+        }
+
+        if (normalizedPath.contains("|")) {
+            addViolation(constraintValidatorContext, "The character '|' is not allowed in the path");
+            return false;
+        }
+
+        if (normalizedPath.isEmpty()) {
+            return true;
+        }
+
+        String strippedPath = normalizedPath;
+
+        if (strippedPath.startsWith("/")) {
+            strippedPath = strippedPath.substring(1);
+        }
+
+        if (strippedPath.endsWith("/")) {
+            strippedPath = strippedPath.substring(0, strippedPath.length() - 1);
+        }
+
+        if (strippedPath.isEmpty()) {
+            return true;
+        }
+
+        String[] segments = strippedPath.split("/");
+
+        for (String segment : segments) {
+            if (segment.isEmpty()) {
+                addViolation(constraintValidatorContext, "Path can't contain empty segments (caused by consecutive slashes like 'folder//file')");
+                return false;
+            }
+
+            for (char c : segment.toCharArray()) {
+                if (!isAllowedCharacter(c)) {
+                    String message = "The character '%c' is not allowed in the path segments. Allowed characters are letters, digits, and _, ., ' ', (, ), -".formatted(c);
+                    addViolation(constraintValidatorContext, message);
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
+
+    private static void addViolation(ConstraintValidatorContext constraintValidatorContext, String message) {
+        constraintValidatorContext.disableDefaultConstraintViolation();
+        constraintValidatorContext.buildConstraintViolationWithTemplate(message)
+                .addConstraintViolation();
+    }
+
+    private boolean isAllowedCharacter(char character) {
+        if (Character.isLetter(character) || Character.isDigit(character)) {
+            return true;
+        }
+
+        return switch (character) {
+            case '_', '.', ' ', '(', ')', '-' -> true;
+            default -> false;
+        };
     }
 }
