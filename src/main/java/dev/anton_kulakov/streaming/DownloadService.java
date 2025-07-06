@@ -17,7 +17,7 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class StreamingResponseFactory {
+public class DownloadService {
     private final MinioService minioService;
     private final FolderService folderService;
     private final ResourceHandlerFactory resourceHandlerFactory;

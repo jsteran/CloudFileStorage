@@ -10,7 +10,7 @@ import dev.anton_kulakov.model.SecurityUser;
 import dev.anton_kulakov.service.ResourceSearchService;
 import dev.anton_kulakov.service.handler.ResourceHandlerFactory;
 import dev.anton_kulakov.service.handler.ResourceHandlerInterface;
-import dev.anton_kulakov.streaming.StreamingResponseFactory;
+import dev.anton_kulakov.streaming.DownloadService;
 import dev.anton_kulakov.validation.ValidPath;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -42,7 +42,7 @@ import java.util.List;
 public class ResourceController {
     public final ResourceHandlerFactory resourceHandlerFactory;
     private final ResourceSearchService resourceSearchService;
-    private final StreamingResponseFactory streamingResponseFactory;
+    private final DownloadService downloadService;
 
     @Operation(
             summary = "Getting information about a file or folder",
@@ -218,7 +218,7 @@ public class ResourceController {
             @FullPath("path")
             @ValidPath
             @Parameter(description = "The path to the folder or file you want to download", example = "folder/file.txt") String path) {
-        DownloadResponse downloadResponse = streamingResponseFactory.prepareDownloadResponse(path);
+        DownloadResponse downloadResponse = downloadService.prepareDownloadResponse(path);
 
         return ResponseEntity.ok()
                 .contentType(downloadResponse.getContentType())
