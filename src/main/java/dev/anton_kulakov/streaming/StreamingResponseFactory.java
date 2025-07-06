@@ -1,8 +1,10 @@
 package dev.anton_kulakov.streaming;
 
+import dev.anton_kulakov.dto.DownloadResponse;
 import dev.anton_kulakov.exception.ResourceNotFoundException;
 import dev.anton_kulakov.service.FolderService;
 import dev.anton_kulakov.service.MinioService;
+import dev.anton_kulakov.service.handler.ResourceHandlerFactory;
 import dev.anton_kulakov.util.PathProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,25 +20,28 @@ import java.util.List;
 public class StreamingResponseFactory {
     private final MinioService minioService;
     private final FolderService folderService;
+    private final ResourceHandlerFactory resourceHandlerFactory;
     private final PathProcessor pathProcessor;
     private final StreamCopier streamCopier;
 
-    public StreamingResponseBody createResponse(String path) {
-        if (path.endsWith("/")) {
-            List<String> resourcesInFolder = folderService.getResourcesNamesInFolder(path);
-
-            if (resourcesInFolder.isEmpty()) {
-                log.error("Folder '{}' is empty", path);
-                throw new ResourceNotFoundException("Folder is empty");
-            }
-
-            return new FolderStreamingResponseBody(minioService, pathProcessor, streamCopier, resourcesInFolder, path);
+    public DownloadResponse prepareDownloadResponse(String path) {
+        if (!resourceHandlerFactory.getResourceHandler(path).isExists(path)) {
+            log.warn("Attempt to download a non-existent resource: {}", path);
+            throw new ResourceNotFoundException("The requested resource could not be found");
         }
 
-        return new FileStreamingResponseBody(minioService, streamCopier, path);
-    }
+        StreamingResponseBody responseBody;
+        MediaType contentType;
 
-    public MediaType getContentType(String path) {
-        return path.endsWith("/") ? MediaType.valueOf("application/zip") : MediaType.APPLICATION_OCTET_STREAM;
+        if (path.endsWith("/")) {
+            List<String> resourcesInFolder = folderService.getResourcesNamesInFolder(path);
+            responseBody = new FolderStreamingResponseBody(minioService, pathProcessor, streamCopier, resourcesInFolder, path);
+            contentType = MediaType.valueOf("application/zip");
+        } else {
+            responseBody = new FileStreamingResponseBody(minioService, streamCopier, path);
+            contentType = MediaType.APPLICATION_OCTET_STREAM;
+        }
+
+        return new DownloadResponse(responseBody, contentType);
     }
 }

@@ -2,10 +2,10 @@ package dev.anton_kulakov.controller;
 
 import dev.anton_kulakov.config.OpenApiConfig;
 import dev.anton_kulakov.config.resolver.FullPath;
+import dev.anton_kulakov.dto.DownloadResponse;
 import dev.anton_kulakov.dto.ErrorMessage;
 import dev.anton_kulakov.dto.ResourceInfoDto;
 import dev.anton_kulakov.exception.ResourceAlreadyExistsException;
-import dev.anton_kulakov.exception.ResourceNotFoundException;
 import dev.anton_kulakov.model.SecurityUser;
 import dev.anton_kulakov.service.ResourceSearchService;
 import dev.anton_kulakov.service.handler.ResourceHandlerFactory;
@@ -218,14 +218,11 @@ public class ResourceController {
             @FullPath("path")
             @ValidPath
             @Parameter(description = "The path to the folder or file you want to download", example = "folder/file.txt") String path) {
-        if (!resourceHandlerFactory.getResourceHandler(path).isExists(path)) {
-            log.error("The requested resource with path {} could not be found", path);
-            throw new ResourceNotFoundException("The requested resource could not be found");
-        }
+        DownloadResponse downloadResponse = streamingResponseFactory.prepareDownloadResponse(path);
 
         return ResponseEntity.ok()
-                .contentType(streamingResponseFactory.getContentType(path))
-                .body(streamingResponseFactory.createResponse(path));
+                .contentType(downloadResponse.getContentType())
+                .body(downloadResponse.getResponseBody());
     }
 
     @Operation(summary = "Deleting a folder or a file")
