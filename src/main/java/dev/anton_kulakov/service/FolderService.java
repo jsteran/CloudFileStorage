@@ -1,6 +1,7 @@
 package dev.anton_kulakov.service;
 
 import dev.anton_kulakov.dto.ResourceInfoDto;
+import dev.anton_kulakov.exception.ResourceAlreadyExistsException;
 import dev.anton_kulakov.exception.ResourceNotFoundException;
 import dev.anton_kulakov.mapper.ResourceMapper;
 import dev.anton_kulakov.util.PathProcessor;
@@ -93,5 +94,24 @@ public class FolderService {
         }
 
         return resources;
+    }
+
+    public ResourceInfoDto create(String path, int userId) {
+        String userRootFolder = pathProcessor.getUserRootFolder(userId);
+        String newFolderName = pathProcessor.getLastFolderName(path);
+        String parentFolderPath = pathProcessor.getPathWithoutLastFolder(path, newFolderName);
+
+        if (!parentFolderPath.equals(userRootFolder) && !minioService.isFolderExists(parentFolderPath)) {
+            log.error("Attempt to create folder in a non-existent parent folder: {}", parentFolderPath);
+            throw new ResourceNotFoundException("The parent folder doesn't exist");
+        }
+
+        if (minioService.isFolderExists(path)) {
+            log.error("The folder with path {} already exists", path);
+            throw new ResourceAlreadyExistsException("The folder with the path %s already exists".formatted(path));
+        }
+
+        minioService.createEmptyFolder(path);
+        return resourceMapper.toFolderInfoDto(path);
     }
 }

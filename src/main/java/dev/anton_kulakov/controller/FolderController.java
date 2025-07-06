@@ -4,12 +4,8 @@ import dev.anton_kulakov.config.OpenApiConfig;
 import dev.anton_kulakov.config.resolver.FullPath;
 import dev.anton_kulakov.dto.ErrorMessage;
 import dev.anton_kulakov.dto.ResourceInfoDto;
-import dev.anton_kulakov.exception.ResourceAlreadyExistsException;
-import dev.anton_kulakov.exception.ResourceNotFoundException;
 import dev.anton_kulakov.model.SecurityUser;
 import dev.anton_kulakov.service.FolderService;
-import dev.anton_kulakov.service.MinioService;
-import dev.anton_kulakov.util.PathProcessor;
 import dev.anton_kulakov.validation.ValidPath;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -38,8 +34,6 @@ import java.util.List;
 @Tag(name = OpenApiConfig.FOLDER_TAG)
 public class FolderController {
     private final FolderService folderService;
-    private final MinioService minioService;
-    private final PathProcessor pathProcessor;
 
     @Operation(summary = "Getting folder contents")
     @ApiResponses(value = {
@@ -241,23 +235,7 @@ public class FolderController {
             @FullPath("path")
             @ValidPath
             @Parameter(description = "The path where the new folder will be created", example = "folder/new folder/") String path) {
-        String userRootFolder = pathProcessor.getUserRootFolder(securityUser.getUserId());
-        String newFolderName = pathProcessor.getLastFolderName(path);
-        String parentFolderPath = pathProcessor.getPathWithoutLastFolder(path, newFolderName);
-
-        if (!parentFolderPath.equals(userRootFolder) && !minioService.isFolderExists(parentFolderPath)) {
-            log.error("The parent folder with name {} does not exist", parentFolderPath);
-            throw new ResourceNotFoundException("The parent folder doesn't exists");
-        }
-
-        if (minioService.isFolderExists(path)) {
-            log.error("The folder with path {} is already exists", path);
-            throw new ResourceAlreadyExistsException("The folder with the path %s is already exists".formatted(path));
-        }
-
-        minioService.createEmptyFolder(path);
-        ResourceInfoDto resourceInfoDto = folderService.getInfo(path);
-
+        ResourceInfoDto resourceInfoDto = folderService.create(path, securityUser.getUserId());
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(resourceInfoDto);
