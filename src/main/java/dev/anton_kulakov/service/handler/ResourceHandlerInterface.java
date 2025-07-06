@@ -8,7 +8,7 @@ public interface ResourceHandlerInterface {
 
     void delete(String path);
 
-    void move(String from, String to);
+    String move(String from, String to);
 
     boolean isExists(String path);
 

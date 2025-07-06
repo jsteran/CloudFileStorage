@@ -41,7 +41,7 @@ public class FileResourceHandler implements ResourceHandlerInterface {
     }
 
     @Override
-    public void move(String from, String to) {
+    public String move(String from, String to) {
         if (!isDestinationPathValid(to)) {
             log.error("The destination path {} for file {} is invalid", to, from);
             throw new InvalidMoveOperationException("The destination path for file is invalid");
@@ -65,6 +65,7 @@ public class FileResourceHandler implements ResourceHandlerInterface {
 
         minioService.copy(from, to);
         minioService.removeObject(from);
+        return to;
     }
 
     public boolean isDestinationPathValid(String to) {

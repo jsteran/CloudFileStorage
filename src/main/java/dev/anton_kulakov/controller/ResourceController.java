@@ -417,8 +417,8 @@ public class ResourceController {
             @ValidPath
             @Parameter(description = "The new path to the folder or file that we are moving or renaming", example = "folder/new_file.txt") String to) {
         ResourceHandlerInterface resourceHandler = resourceHandlerFactory.getResourceHandler(from);
-        resourceHandler.move(from, to);
-        ResourceInfoDto resourceInfoDto = resourceHandler.getInfo(to);
+        String newPath = resourceHandler.move(from, to);
+        ResourceInfoDto resourceInfoDto = resourceHandler.getInfo(newPath);
 
         return ResponseEntity.ok().body(resourceInfoDto);
     }

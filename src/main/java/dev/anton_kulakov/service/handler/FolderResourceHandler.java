@@ -38,7 +38,7 @@ public class FolderResourceHandler implements ResourceHandlerInterface {
     }
 
     @Override
-    public void move(String from, String to) {
+    public String move(String from, String to) {
         if (!minioService.isFolderExists(from)) {
             log.error("The folder with path {} does not exist", from);
             throw new ResourceNotFoundException("The requested folder could not be found");
@@ -50,6 +50,7 @@ public class FolderResourceHandler implements ResourceHandlerInterface {
         }
 
         folderService.move(from, to);
+        return to;
     }
 
     @Override
