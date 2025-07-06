@@ -9,7 +9,6 @@ import dev.anton_kulakov.exception.ResourceNotFoundException;
 import dev.anton_kulakov.model.SecurityUser;
 import dev.anton_kulakov.service.FolderService;
 import dev.anton_kulakov.service.MinioService;
-import dev.anton_kulakov.service.handler.FolderResourceHandler;
 import dev.anton_kulakov.util.PathProcessor;
 import dev.anton_kulakov.validation.ValidPath;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,7 +24,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
@@ -36,7 +38,6 @@ import java.util.List;
 @Tag(name = OpenApiConfig.FOLDER_TAG)
 public class FolderController {
     private final FolderService folderService;
-    private final FolderResourceHandler folderResourceHandler;
     private final MinioService minioService;
     private final PathProcessor pathProcessor;
 
@@ -124,11 +125,6 @@ public class FolderController {
             @ValidPath
             @FullPath("path")
             @Parameter(description = "The path to the folder containing the content the user is interested in", example = "folder/") String path) {
-        if (!folderResourceHandler.isExists(path)) {
-            log.error("The folder with path {} does not exist", path);
-            throw new ResourceNotFoundException("The folder does not exist");
-        }
-
         List<ResourceInfoDto> resources = folderService.getContent(path);
         return ResponseEntity.ok(resources);
     }
