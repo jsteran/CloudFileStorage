@@ -49,6 +49,25 @@ public class PathProcessor {
         return splitObjectName[splitObjectName.length - 1];
     }
 
+    public String getFileExtension(String path) {
+        if (path == null || path.isBlank()) {
+            return "";
+        }
+
+        String fileName = getFileName(path);
+        int lastIndexOfDot = fileName.lastIndexOf('.');
+
+        if (lastIndexOfDot <= 0) {
+            return "";
+        }
+
+        if (lastIndexOfDot == fileName.length() - 1) {
+            return "";
+        }
+
+        return fileName.substring(lastIndexOfDot);
+    }
+
     public String getFolderPath(String fullPath, String fileName) {
 
         if (fullPath.endsWith(fileName)) {

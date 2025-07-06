@@ -6,6 +6,7 @@ import dev.anton_kulakov.exception.ResourceAlreadyExistsException;
 import dev.anton_kulakov.exception.ResourceNotFoundException;
 import dev.anton_kulakov.mapper.ResourceMapper;
 import dev.anton_kulakov.service.MinioService;
+import dev.anton_kulakov.util.PathProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -17,6 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class FileResourceHandler implements ResourceHandlerInterface {
     private final MinioService minioService;
     private final ResourceMapper resourceMapper;
+    private final PathProcessor pathProcessor;
 
     @Override
     public ResourceInfoDto getInfo(String path) {
@@ -53,6 +55,12 @@ public class FileResourceHandler implements ResourceHandlerInterface {
         if (minioService.isFileExists(to)) {
             log.error("The file with path {} is already exists", to);
             throw new ResourceAlreadyExistsException("The file already exists at the destination path: %s".formatted(to));
+        }
+
+        String fileExtension = pathProcessor.getFileExtension(from);
+
+        if (!to.contains(fileExtension)) {
+            to += fileExtension;
         }
 
         minioService.copy(from, to);
