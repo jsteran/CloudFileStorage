@@ -6,10 +6,8 @@ import dev.anton_kulakov.dto.UserRequestDto;
 import dev.anton_kulakov.dto.UserResponseDto;
 import dev.anton_kulakov.mapper.UserMapper;
 import dev.anton_kulakov.model.User;
-import dev.anton_kulakov.service.MinioService;
 import dev.anton_kulakov.service.UserDetailsServiceImpl;
 import dev.anton_kulakov.service.UserService;
-import dev.anton_kulakov.util.PathProcessor;
 import dev.anton_kulakov.util.SecurityContextUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -37,10 +35,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class RegistrationController {
     private final UserService userService;
     private final UserMapper userMapper;
-    private final MinioService minioService;
     private final UserDetailsServiceImpl userDetailsServiceImpl;
     private final SecurityContextUtil securityContextUtil;
-    private final PathProcessor pathProcessor;
 
     @Operation(summary = "Creating a new user")
     @ApiResponses(value = {
@@ -119,8 +115,6 @@ public class RegistrationController {
                                                   HttpServletResponse resp) {
         User user = userService.createUser(userRequestDto);
         UserResponseDto userResponseDto = userMapper.toResponseDto(user);
-        String userRootFolder = pathProcessor.getUserRootFolder(user.getId());
-        minioService.createEmptyFolder(userRootFolder);
 
         UserDetails userDetails = userDetailsServiceImpl.loadUserByUsername(user.getUsername());
         Authentication authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());

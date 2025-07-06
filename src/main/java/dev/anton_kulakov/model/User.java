@@ -1,5 +1,6 @@
 package dev.anton_kulakov.model;
 
+import dev.anton_kulakov.controller.UserListener;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -12,6 +13,7 @@ import java.io.Serializable;
 @Setter
 @Getter
 @NoArgsConstructor
+@EntityListeners(UserListener.class)
 public class User implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

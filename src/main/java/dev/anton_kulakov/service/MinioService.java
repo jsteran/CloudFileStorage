@@ -1,6 +1,7 @@
 package dev.anton_kulakov.service;
 
 import dev.anton_kulakov.exception.MinioException;
+import dev.anton_kulakov.util.PathProcessor;
 import io.minio.*;
 import io.minio.errors.ErrorResponseException;
 import io.minio.messages.DeleteError;
@@ -26,6 +27,8 @@ public class MinioService {
 
     @Value("${minio.bucket-name}")
     private String bucketName;
+
+    private final PathProcessor pathProcessor;
 
     @PostConstruct
     private void createBucketIfNotExists() {
@@ -139,7 +142,7 @@ public class MinioService {
                     .object(resourceName)
                     .build());
         } catch (Exception e) {
-            log.error( "Failed to get object '{}' from bucket '{}'", resourceName, bucketName, e);
+            log.error("Failed to get object '{}' from bucket '{}'", resourceName, bucketName, e);
             throw new MinioException("Failed to get input stream");
         }
     }
@@ -204,5 +207,10 @@ public class MinioService {
             log.error("Failed to create empty folder '{}' in bucket '{}'", path, bucketName, e);
             throw new MinioException("Failed to create empty folder");
         }
+    }
+
+    public void createUserRootFolder(int userId) {
+        String userRootFolder = pathProcessor.getUserRootFolder(userId);
+        createEmptyFolder(userRootFolder);
     }
 }
