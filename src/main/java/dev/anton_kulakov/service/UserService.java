@@ -7,6 +7,7 @@ import dev.anton_kulakov.model.User;
 import dev.anton_kulakov.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,12 @@ public class UserService {
         String encodedPassword = passwordEncoder.encode(userRequestDto.getPassword());
         userRequestDto.setPassword(encodedPassword);
         User user = userMapper.toUser(userRequestDto);
-        return userRepository.save(user);
+
+        try {
+            return userRepository.save(user);
+        } catch (DataIntegrityViolationException e) {
+            log.warn("Race condition detected during user creation for username '{}'.", username);
+            throw new UsernameAlreadyTakenException("User with username %s is already exists".formatted(username));
+        }
     }
 }
