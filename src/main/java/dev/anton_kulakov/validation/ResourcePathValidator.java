@@ -58,7 +58,7 @@ public class ResourcePathValidator implements ConstraintValidator<ValidPath, Str
 
             for (char c : segment.toCharArray()) {
                 if (!isAllowedCharacter(c)) {
-                    String message = "The character '%c' is not allowed in the path segments. Allowed characters are letters, digits, and _, ., ' ', (, ), -".formatted(c);
+                    String message = "The character '%c' is not allowed. Please use only letters, numbers, spaces, periods, hyphens, underscores and parentheses".formatted(c);
                     addViolation(constraintValidatorContext, message);
                     return false;
                 }
