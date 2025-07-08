@@ -1,4 +1,4 @@
-package dev.anton_kulakov.validation;
+package dev.anton_kulakov.validator;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;

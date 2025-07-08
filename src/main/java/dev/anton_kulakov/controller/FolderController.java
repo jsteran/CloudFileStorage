@@ -6,7 +6,7 @@ import dev.anton_kulakov.dto.ErrorMessage;
 import dev.anton_kulakov.dto.ResourceInfoDto;
 import dev.anton_kulakov.model.SecurityUser;
 import dev.anton_kulakov.service.FolderResourceService;
-import dev.anton_kulakov.validation.ValidPath;
+import dev.anton_kulakov.validator.ValidPath;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

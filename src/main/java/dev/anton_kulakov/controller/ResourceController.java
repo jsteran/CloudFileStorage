@@ -11,7 +11,7 @@ import dev.anton_kulakov.service.UploadService;
 import dev.anton_kulakov.service.ResourceServiceFactory;
 import dev.anton_kulakov.service.ResourceServiceInterface;
 import dev.anton_kulakov.service.DownloadService;
-import dev.anton_kulakov.validation.ValidPath;
+import dev.anton_kulakov.validator.ValidPath;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
