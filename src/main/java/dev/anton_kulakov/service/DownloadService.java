@@ -2,6 +2,7 @@ package dev.anton_kulakov.service;
 
 import dev.anton_kulakov.dto.DownloadResponse;
 import dev.anton_kulakov.exception.ResourceNotFoundException;
+import dev.anton_kulakov.service.handler.FolderResourceHandler;
 import dev.anton_kulakov.service.handler.ResourceHandlerFactory;
 import dev.anton_kulakov.streaming.FileStreamingResponseBody;
 import dev.anton_kulakov.streaming.FolderStreamingResponseBody;
@@ -20,8 +21,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DownloadService {
     private final MinioService minioService;
-    private final FolderService folderService;
     private final ResourceHandlerFactory resourceHandlerFactory;
+    private final FolderResourceHandler folderResourceHandler;
     private final PathProcessor pathProcessor;
     private final StreamCopier streamCopier;
 
@@ -35,7 +36,7 @@ public class DownloadService {
         MediaType contentType;
 
         if (path.endsWith("/")) {
-            List<String> resourcesInFolder = folderService.getResourcesNamesInFolder(path);
+            List<String> resourcesInFolder = folderResourceHandler.getResourcesNamesInFolder(path);
             responseBody = new FolderStreamingResponseBody(minioService, pathProcessor, streamCopier, resourcesInFolder, path);
             contentType = MediaType.valueOf("application/zip");
         } else {

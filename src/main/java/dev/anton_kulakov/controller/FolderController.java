@@ -5,7 +5,7 @@ import dev.anton_kulakov.config.resolver.FullPath;
 import dev.anton_kulakov.dto.ErrorMessage;
 import dev.anton_kulakov.dto.ResourceInfoDto;
 import dev.anton_kulakov.model.SecurityUser;
-import dev.anton_kulakov.service.FolderService;
+import dev.anton_kulakov.service.handler.FolderResourceHandler;
 import dev.anton_kulakov.validation.ValidPath;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -33,7 +33,7 @@ import java.util.List;
 @RequestMapping("/api/directory")
 @Tag(name = OpenApiConfig.FOLDER_TAG)
 public class FolderController {
-    private final FolderService folderService;
+    private final FolderResourceHandler folderResourceHandler;
 
     @Operation(summary = "Getting folder contents")
     @ApiResponses(value = {
@@ -119,7 +119,7 @@ public class FolderController {
             @ValidPath
             @FullPath("path")
             @Parameter(description = "The path to the folder containing the content the user is interested in", example = "folder/") String path) {
-        List<ResourceInfoDto> resources = folderService.getContent(path);
+        List<ResourceInfoDto> resources = folderResourceHandler.getContent(path);
         return ResponseEntity.ok(resources);
     }
 
@@ -235,7 +235,7 @@ public class FolderController {
             @FullPath("path")
             @ValidPath
             @Parameter(description = "The path where the new folder will be created", example = "folder/new folder/") String path) {
-        ResourceInfoDto resourceInfoDto = folderService.create(path, securityUser.getUserId());
+        ResourceInfoDto resourceInfoDto = folderResourceHandler.create(path, securityUser.getUserId());
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(resourceInfoDto);
