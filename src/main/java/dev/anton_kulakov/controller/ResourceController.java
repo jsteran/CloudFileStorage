@@ -10,7 +10,7 @@ import dev.anton_kulakov.service.ResourceSearchService;
 import dev.anton_kulakov.service.UploadService;
 import dev.anton_kulakov.service.handler.ResourceHandlerFactory;
 import dev.anton_kulakov.service.handler.ResourceHandlerInterface;
-import dev.anton_kulakov.streaming.DownloadService;
+import dev.anton_kulakov.service.DownloadService;
 import dev.anton_kulakov.validation.ValidPath;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

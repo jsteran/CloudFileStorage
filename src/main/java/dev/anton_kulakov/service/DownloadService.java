@@ -1,10 +1,11 @@
-package dev.anton_kulakov.streaming;
+package dev.anton_kulakov.service;
 
 import dev.anton_kulakov.dto.DownloadResponse;
 import dev.anton_kulakov.exception.ResourceNotFoundException;
-import dev.anton_kulakov.service.FolderService;
-import dev.anton_kulakov.service.MinioService;
 import dev.anton_kulakov.service.handler.ResourceHandlerFactory;
+import dev.anton_kulakov.streaming.FileStreamingResponseBody;
+import dev.anton_kulakov.streaming.FolderStreamingResponseBody;
+import dev.anton_kulakov.streaming.StreamCopier;
 import dev.anton_kulakov.util.PathProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
