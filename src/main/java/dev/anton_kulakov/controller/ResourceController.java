@@ -5,9 +5,9 @@ import dev.anton_kulakov.config.resolver.FullPath;
 import dev.anton_kulakov.dto.DownloadResponse;
 import dev.anton_kulakov.dto.ErrorMessage;
 import dev.anton_kulakov.dto.ResourceInfoDto;
-import dev.anton_kulakov.exception.ResourceAlreadyExistsException;
 import dev.anton_kulakov.model.SecurityUser;
 import dev.anton_kulakov.service.ResourceSearchService;
+import dev.anton_kulakov.service.UploadService;
 import dev.anton_kulakov.service.handler.ResourceHandlerFactory;
 import dev.anton_kulakov.service.handler.ResourceHandlerInterface;
 import dev.anton_kulakov.streaming.DownloadService;
@@ -31,7 +31,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -43,6 +42,7 @@ public class ResourceController {
     public final ResourceHandlerFactory resourceHandlerFactory;
     private final ResourceSearchService resourceSearchService;
     private final DownloadService downloadService;
+    private final UploadService uploadService;
 
     @Operation(
             summary = "Getting information about a file or folder",
@@ -576,23 +576,8 @@ public class ResourceController {
             @Size(min = 1)
             @RequestParam("object")
             @Parameter(description = "list of files to download") List<MultipartFile> files) {
-        List<ResourceInfoDto> resourceInfoDtos = new ArrayList<>();
-
-        for (MultipartFile file : files) {
-            String fullPath = path + file.getOriginalFilename();
-            ResourceHandlerInterface resourceHandler = resourceHandlerFactory.getResourceHandler(fullPath);
-
-            if (resourceHandler.isExists(fullPath)) {
-                log.error("The file with the path {} is already exists", fullPath);
-                throw new ResourceAlreadyExistsException("The file with the path %s is already exists".formatted(fullPath));
-            }
-
-            ResourceInfoDto resourceInfoDto = resourceHandler.upload(path, file);
-            resourceInfoDtos.add(resourceInfoDto);
-        }
-
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(resourceInfoDtos);
+                .body(uploadService.upload(path, files));
     }
 }

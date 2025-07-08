@@ -1,6 +1,7 @@
 package dev.anton_kulakov.service;
 
 import dev.anton_kulakov.exception.MinioException;
+import dev.anton_kulakov.exception.ResourceAlreadyExistsException;
 import dev.anton_kulakov.util.PathProcessor;
 import io.minio.*;
 import io.minio.errors.ErrorResponseException;
@@ -17,7 +18,9 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -147,20 +150,29 @@ public class MinioService {
         }
     }
 
-    public void upload(String path, MultipartFile file) {
+    public void upload(String fullObjectPath, MultipartFile file, boolean preventOverwrite) {
         try {
+            HashMap<String, String> headers = new HashMap<>();
+            if (preventOverwrite) {
+                headers.put("If-None-Match", "*");
+            }
+
             minioClient.putObject(PutObjectArgs.builder()
                     .bucket(bucketName)
-                    .object(path + file.getOriginalFilename())
+                    .object(fullObjectPath)
                     .stream(file.getInputStream(), file.getSize(), -1)
                     .contentType(file.getContentType())
+                    .headers(headers)
                     .build());
+        } catch (ErrorResponseException e) {
+            if (preventOverwrite && "PreconditionFailed".equals(e.errorResponse().code())) {
+                throw new ResourceAlreadyExistsException("Resource already exists: %s".formatted(fullObjectPath));
+            }
+            log.error("Upload failed for '{}'", fullObjectPath, e);
+            throw new MinioException("Upload failed");
         } catch (Exception e) {
-            log.error("Failed to upload file '{}' to path '{}' in bucket '{}'",
-                    file.getOriginalFilename(),
-                    path + file.getOriginalFilename(),
-                    bucketName, e);
-            throw new MinioException("Failed to upload file");
+            log.error("Upload failed for '{}'", fullObjectPath, e);
+            throw new MinioException("Upload failed");
         }
     }
 
@@ -196,21 +208,36 @@ public class MinioService {
                 .iterator().hasNext();
     }
 
-    public void createEmptyFolder(String path) {
+    public void createEmptyFolder(String path, boolean preventOverwrite) {
         try {
+            Map<String, String> headers = new HashMap<>();
+            if (preventOverwrite) {
+                headers.put("If-None-Match", "*");
+            }
             minioClient.putObject(PutObjectArgs.builder()
                     .bucket(bucketName)
                     .object(path)
                     .stream(new ByteArrayInputStream(new byte[0]), 0, -1)
+                    .headers(headers)
                     .build());
+        } catch (ErrorResponseException e) {
+            if (preventOverwrite && "PreconditionFailed".equals(e.errorResponse().code())) {
+                throw new ResourceAlreadyExistsException("Folder already exists: " + path);
+            }
+            log.error("Create folder failed: '{}'", path, e);
+            throw new MinioException("Create folder failed");
         } catch (Exception e) {
-            log.error("Failed to create empty folder '{}' in bucket '{}'", path, bucketName, e);
-            throw new MinioException("Failed to create empty folder");
+            log.error("Create folder failed: '{}'", path, e);
+            throw new MinioException("Create folder failed");
         }
     }
 
     public void createUserRootFolder(int userId) {
         String userRootFolder = pathProcessor.getUserRootFolder(userId);
-        createEmptyFolder(userRootFolder);
+        try {
+            createEmptyFolder(userRootFolder, true);
+        } catch (ResourceAlreadyExistsException e) {
+            log.info("User folder already exists: {}", userRootFolder);
+        }
     }
 }

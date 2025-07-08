@@ -10,7 +10,6 @@ import dev.anton_kulakov.util.PathProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.springframework.web.multipart.MultipartFile;
 
 @Slf4j
 @Component
@@ -68,24 +67,12 @@ public class FileResourceHandler implements ResourceHandlerInterface {
         return to;
     }
 
-    public boolean isDestinationPathValid(String to) {
-        return !to.endsWith("/");
-    }
-
     @Override
     public boolean isExists(String path) {
         return minioService.isFileExists(path);
     }
 
-    @Override
-    public ResourceInfoDto upload(String path, MultipartFile file) {
-        if (minioService.isFileExists(path + file)) {
-            log.error("The file with path {} is already exists", path + file);
-            throw new ResourceAlreadyExistsException("The file already exists at the destination path: %s".formatted(path));
-        }
-
-        minioService.upload(path, file);
-        String newPath = path + file.getOriginalFilename();
-        return getInfo(newPath);
+    public boolean isDestinationPathValid(String to) {
+        return !to.endsWith("/");
     }
 }

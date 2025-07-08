@@ -111,7 +111,7 @@ public class FolderService {
             throw new ResourceAlreadyExistsException("The folder with the path %s already exists".formatted(path));
         }
 
-        minioService.createEmptyFolder(path);
+        minioService.createEmptyFolder(path, true);
         return resourceMapper.toFolderInfoDto(path);
     }
 }
