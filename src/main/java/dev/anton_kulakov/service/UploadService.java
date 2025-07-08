@@ -1,7 +1,6 @@
 package dev.anton_kulakov.service;
 
 import dev.anton_kulakov.dto.ResourceInfoDto;
-import dev.anton_kulakov.service.handler.FileResourceHandler;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -15,7 +14,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UploadService {
     private final MinioService minioService;
-    private final FileResourceHandler fileResourceHandler;
+    private final FileResourceService fileResourceHandler;
 
     public List<ResourceInfoDto> upload(String path, List<MultipartFile> files) {
         List<ResourceInfoDto> uploadedResources = new ArrayList<>();

@@ -1,10 +1,9 @@
-package dev.anton_kulakov.service.handler;
+package dev.anton_kulakov.service;
 
 import dev.anton_kulakov.dto.ResourceInfoDto;
 import dev.anton_kulakov.exception.ResourceAlreadyExistsException;
 import dev.anton_kulakov.exception.ResourceNotFoundException;
 import dev.anton_kulakov.mapper.ResourceMapper;
-import dev.anton_kulakov.service.MinioService;
 import dev.anton_kulakov.util.PathProcessor;
 import io.minio.messages.DeleteObject;
 import io.minio.messages.Item;
@@ -19,7 +18,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class FolderResourceHandler implements ResourceHandlerInterface {
+public class FolderResourceService implements ResourceServiceInterface {
     private final MinioService minioService;
     private final ResourceMapper resourceMapper;
     private final PathProcessor pathProcessor;

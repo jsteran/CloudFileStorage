@@ -2,8 +2,6 @@ package dev.anton_kulakov.service;
 
 import dev.anton_kulakov.dto.DownloadResponse;
 import dev.anton_kulakov.exception.ResourceNotFoundException;
-import dev.anton_kulakov.service.handler.FolderResourceHandler;
-import dev.anton_kulakov.service.handler.ResourceHandlerFactory;
 import dev.anton_kulakov.streaming.FileStreamingResponseBody;
 import dev.anton_kulakov.streaming.FolderStreamingResponseBody;
 import dev.anton_kulakov.streaming.StreamCopier;
@@ -21,13 +19,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DownloadService {
     private final MinioService minioService;
-    private final ResourceHandlerFactory resourceHandlerFactory;
-    private final FolderResourceHandler folderResourceHandler;
+    private final ResourceServiceFactory resourceServiceFactory;
+    private final FolderResourceService folderResourceHandler;
     private final PathProcessor pathProcessor;
     private final StreamCopier streamCopier;
 
     public DownloadResponse prepareDownloadResponse(String path) {
-        if (!resourceHandlerFactory.getResourceHandler(path).isExists(path)) {
+        if (!resourceServiceFactory.getResourceHandler(path).isExists(path)) {
             log.warn("Attempt to download a non-existent resource: {}", path);
             throw new ResourceNotFoundException("The requested resource could not be found");
         }

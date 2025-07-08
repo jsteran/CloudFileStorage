@@ -1,11 +1,10 @@
-package dev.anton_kulakov.service.handler;
+package dev.anton_kulakov.service;
 
 import dev.anton_kulakov.dto.ResourceInfoDto;
 import dev.anton_kulakov.exception.InvalidMoveOperationException;
 import dev.anton_kulakov.exception.ResourceAlreadyExistsException;
 import dev.anton_kulakov.exception.ResourceNotFoundException;
 import dev.anton_kulakov.mapper.ResourceMapper;
-import dev.anton_kulakov.service.MinioService;
 import dev.anton_kulakov.util.PathProcessor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +13,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class FileResourceHandler implements ResourceHandlerInterface {
+public class FileResourceService implements ResourceServiceInterface {
     private final MinioService minioService;
     private final ResourceMapper resourceMapper;
     private final PathProcessor pathProcessor;

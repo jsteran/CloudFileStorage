@@ -6,10 +6,10 @@ import dev.anton_kulakov.dto.DownloadResponse;
 import dev.anton_kulakov.dto.ErrorMessage;
 import dev.anton_kulakov.dto.ResourceInfoDto;
 import dev.anton_kulakov.model.SecurityUser;
-import dev.anton_kulakov.service.ResourceSearchService;
+import dev.anton_kulakov.service.SearchService;
 import dev.anton_kulakov.service.UploadService;
-import dev.anton_kulakov.service.handler.ResourceHandlerFactory;
-import dev.anton_kulakov.service.handler.ResourceHandlerInterface;
+import dev.anton_kulakov.service.ResourceServiceFactory;
+import dev.anton_kulakov.service.ResourceServiceInterface;
 import dev.anton_kulakov.service.DownloadService;
 import dev.anton_kulakov.validation.ValidPath;
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,8 +39,8 @@ import java.util.List;
 @Validated
 @Tag(name = OpenApiConfig.RESOURCE_TAG)
 public class ResourceController {
-    public final ResourceHandlerFactory resourceHandlerFactory;
-    private final ResourceSearchService resourceSearchService;
+    public final ResourceServiceFactory resourceServiceFactory;
+    private final SearchService searchService;
     private final DownloadService downloadService;
     private final UploadService uploadService;
 
@@ -129,7 +129,7 @@ public class ResourceController {
             @FullPath("path")
             @ValidPath
             @Parameter(description = "The path to the folder or file", example = "folder/file.txt") String path) {
-        ResourceHandlerInterface resourceHandler = resourceHandlerFactory.getResourceHandler(path);
+        ResourceServiceInterface resourceHandler = resourceServiceFactory.getResourceHandler(path);
         ResourceInfoDto resourceInfoDto = resourceHandler.getInfo(path);
 
         return ResponseEntity.ok().body(resourceInfoDto);
@@ -304,7 +304,7 @@ public class ResourceController {
             @FullPath("path")
             @ValidPath
             @Parameter(description = "The path to the folder or file that you want to delete", example = "folder/file.txt") String path) {
-        ResourceHandlerInterface resourceHandler = resourceHandlerFactory.getResourceHandler(path);
+        ResourceServiceInterface resourceHandler = resourceServiceFactory.getResourceHandler(path);
         resourceHandler.delete(path);
 
         return ResponseEntity.noContent().build();
@@ -413,7 +413,7 @@ public class ResourceController {
             @FullPath("to")
             @ValidPath
             @Parameter(description = "The new path to the folder or file that we are moving or renaming", example = "folder/new_file.txt") String to) {
-        ResourceHandlerInterface resourceHandler = resourceHandlerFactory.getResourceHandler(from);
+        ResourceServiceInterface resourceHandler = resourceServiceFactory.getResourceHandler(from);
         String newPath = resourceHandler.move(from, to);
         ResourceInfoDto resourceInfoDto = resourceHandler.getInfo(newPath);
 
@@ -486,7 +486,7 @@ public class ResourceController {
             @AuthenticationPrincipal SecurityUser securityUser,
             @RequestParam
             @Parameter(description = "The name of the folder or file the user is searching for", example = "picture") String query) {
-        List<ResourceInfoDto> resources = resourceSearchService.search(securityUser.getUserId(), query.toLowerCase());
+        List<ResourceInfoDto> resources = searchService.search(securityUser.getUserId(), query.toLowerCase());
         return ResponseEntity.ok().body(resources);
     }
 

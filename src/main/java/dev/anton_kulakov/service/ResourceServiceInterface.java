@@ -1,8 +1,8 @@
-package dev.anton_kulakov.service.handler;
+package dev.anton_kulakov.service;
 
 import dev.anton_kulakov.dto.ResourceInfoDto;
 
-public interface ResourceHandlerInterface {
+public interface ResourceServiceInterface {
     ResourceInfoDto getInfo(String path);
 
     void delete(String path);

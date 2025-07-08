@@ -12,7 +12,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class ResourceSearchService {
+public class SearchService {
     private final PathProcessor pathProcessor;
     private final MinioService minioService;
     private final ResourceMapper resourceMapper;
