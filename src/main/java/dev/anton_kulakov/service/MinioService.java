@@ -140,8 +140,8 @@ public class MinioService {
             }
 
             if ("PreconditionFailed".equals(errorCode)) {
-                log.warn("Optimistic lock failed: resource '{}' was modified during the move operation.", from);
-                throw new ConcurrentModificationException("Resource '%s' was modified during the move operation. Please try again.".formatted(from));
+                log.warn("Optimistic lock failed: resource '{}' was modified during the move operation", from);
+                throw new ConcurrentModificationException("Resource '%s' was modified during the move operation. Please try again".formatted(from));
             }
             log.error("MinIO error during conditional copy from '{}' to '{}'", from, to, e);
             throw new MinioException("MinIO error during conditional copy");

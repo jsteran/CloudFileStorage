@@ -13,6 +13,7 @@ import org.springframework.web.method.annotation.HandlerMethodValidationExceptio
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 
+import java.util.ConcurrentModificationException;
 import java.util.List;
 
 @RestControllerAdvice
@@ -47,7 +48,7 @@ public class GlobalExceptionHandler {
             MissingServletRequestPartException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorMessage handleMissingServletRequestParameterException(Exception e) {
-        return new ErrorMessage("One or more required parameters are missing" + e);
+        return new ErrorMessage("One or more required parameters are missing " + e);
     }
 
     @ExceptionHandler(HandlerMethodValidationException.class)
@@ -90,6 +91,12 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorMessage handleDefaultException(Exception e) {
-        return new ErrorMessage("We're sorry, but an unexpected error has occurred. Please try again later" + e);
+        return new ErrorMessage("We're sorry, but an unexpected error has occurred. Please try again later " + e);
+    }
+
+    @ExceptionHandler(ConcurrentModificationException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorMessage handleConcurrentModificationException(ConcurrentModificationException e) {
+        return new ErrorMessage("Resource file or folder was modified during the move operation. Please try again " + e);
     }
 }
