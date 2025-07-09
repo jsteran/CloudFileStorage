@@ -2,6 +2,7 @@ package dev.anton_kulakov.service;
 
 import dev.anton_kulakov.exception.MinioException;
 import dev.anton_kulakov.exception.ResourceAlreadyExistsException;
+import dev.anton_kulakov.exception.ResourceNotFoundException;
 import dev.anton_kulakov.util.PathProcessor;
 import io.minio.*;
 import io.minio.errors.ErrorResponseException;
@@ -17,10 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -115,26 +113,41 @@ public class MinioService {
 
     public void copy(String from, String to) {
         try {
+            StatObjectResponse statObjectResponse = minioClient.statObject(StatObjectArgs.builder()
+                    .bucket(bucketName)
+                    .object(from)
+                    .build());
+
+            String etag = statObjectResponse.etag();
+
             minioClient.copyObject(CopyObjectArgs.builder()
                     .bucket(bucketName)
                     .object(to)
                     .source(CopySource.builder()
                             .bucket(bucketName)
                             .object(from)
+                            .matchETag(etag)
                             .build())
                     .build());
 
             log.info("Successfully copied object from '{}' to '{}' in bucket '{}'", from, to, bucketName);
-        } catch (Exception e) {
-            log.error("Failed to copy object from '{}' to '{}' in bucket '{}'", from, to, bucketName, e);
+        } catch (ErrorResponseException e) {
+            String errorCode = e.errorResponse().code();
 
-            try {
-                removeObject(to);
-            } catch (Exception ex) {
-                log.error("CRITICAL: Failed to clean up destination object '{}' after a copy error. Manual intervention may be required.", to, ex);
+            if ("NoSuchKey".equals(errorCode)) {
+                log.warn("Attempted to move a non-existent resource: {}", from);
+                throw new ResourceNotFoundException("The source file could not be found: " + from);
             }
 
-            throw new MinioException("Failed to copy object");
+            if ("PreconditionFailed".equals(errorCode)) {
+                log.warn("Optimistic lock failed: resource '{}' was modified during the move operation.", from);
+                throw new ConcurrentModificationException("Resource '%s' was modified during the move operation. Please try again.".formatted(from));
+            }
+            log.error("MinIO error during conditional copy from '{}' to '{}'", from, to, e);
+            throw new MinioException("MinIO error during conditional copy");
+        } catch (Exception e) {
+            log.error("Unexpected error during conditional copy from '{}' to '{}'", from, to, e);
+            throw new MinioException("Unexpected error during conditional copy");
         }
     }
 

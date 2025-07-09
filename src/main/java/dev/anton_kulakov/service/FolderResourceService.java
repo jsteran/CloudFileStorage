@@ -54,11 +54,6 @@ public class FolderResourceService implements ResourceServiceInterface {
 
     @Override
     public String move(String from, String to) {
-        if (!minioService.isFolderExists(from)) {
-            log.error("The folder with path {} does not exist", from);
-            throw new ResourceNotFoundException("The requested folder could not be found");
-        }
-
         if (minioService.isFolderExists(to)) {
             log.error("The folder with path {} is already exists", to);
             throw new ResourceAlreadyExistsException("The folder already exists at the destination path: %s".formatted(to));
