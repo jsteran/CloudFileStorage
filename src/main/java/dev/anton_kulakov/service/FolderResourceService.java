@@ -131,11 +131,6 @@ public class FolderResourceService implements ResourceServiceInterface {
             throw new ResourceNotFoundException("The parent folder doesn't exist");
         }
 
-        if (minioService.isFolderExists(path)) {
-            log.error("The folder with path {} already exists", path);
-            throw new ResourceAlreadyExistsException("The folder with the path %s already exists".formatted(path));
-        }
-
         minioService.createEmptyFolder(path, true);
         return resourceMapper.toFolderInfoDto(path);
     }
