@@ -56,6 +56,12 @@ public class MinioService {
                     .bucket(bucketName)
                     .object(path)
                     .build());
+        } catch (ErrorResponseException e) {
+            if ("NoSuchKey".equals(e.errorResponse().code())) {
+                throw new ResourceNotFoundException("Resource not found at path: " + path);
+            }
+            log.error("Failed to retrieve metadata for object in bucket '{}'. Path: '{}'", bucketName, path, e);
+            throw new MinioException("Failed to retrieve object metadata");
         } catch (Exception e) {
             log.error("Failed to retrieve metadata for object in bucket '{}'. Path: '{}'", bucketName, path, e);
             throw new MinioException("Failed to retrieve object metadata");

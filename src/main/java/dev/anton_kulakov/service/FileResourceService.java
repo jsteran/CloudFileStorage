@@ -20,11 +20,6 @@ public class FileResourceService implements ResourceServiceInterface {
 
     @Override
     public ResourceInfoDto getInfo(String path) {
-        if (!minioService.isFileExists(path)) {
-            log.error("The requested file with path {} could not be found", path);
-            throw new ResourceNotFoundException("The requested file could not be found");
-        }
-
         return resourceMapper.toFileInfoDto(minioService.getStatObject(path));
     }
 
