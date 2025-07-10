@@ -40,15 +40,15 @@ public class FileResourceService implements ResourceServiceInterface {
             throw new InvalidMoveOperationException("The destination path for file is invalid");
         }
 
-        if (minioService.isFileExists(to)) {
-            log.error("The file with path {} is already exists", to);
-            throw new ResourceAlreadyExistsException("The file already exists at the destination path: %s".formatted(to));
-        }
-
         String fileExtension = pathProcessor.getFileExtension(from);
 
         if (!to.contains(fileExtension)) {
             to += fileExtension;
+        }
+
+        if (minioService.isFileExists(to)) {
+            log.error("The file with path {} is already exists", to);
+            throw new ResourceAlreadyExistsException("The file already exists at the destination path: %s".formatted(to));
         }
 
         minioService.copy(from, to);
