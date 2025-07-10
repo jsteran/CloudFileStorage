@@ -87,12 +87,13 @@ public class FolderResourceService implements ResourceServiceInterface {
     }
 
     public List<ResourceInfoDto> getContent(String path) {
-        if (!minioService.isFolderExists(path)) {
+        List<Item> objects = minioService.getListObjects(path, false);
+
+        if (objects.isEmpty() && !minioService.isFolderExists(path)) {
             log.warn("Attempted to get content of a non-existent folder: {}", path);
             throw new ResourceNotFoundException("The folder with the path %s could not be found".formatted(path));
         }
 
-        List<Item> objects = minioService.getListObjects(path, false);
         List<ResourceInfoDto> resources = new ArrayList<>();
 
         for (Item object : objects) {
