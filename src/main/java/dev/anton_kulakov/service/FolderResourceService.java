@@ -35,11 +35,6 @@ public class FolderResourceService implements ResourceServiceInterface {
 
     @Override
     public void delete(String path) {
-        if (!minioService.isFolderExists(path)) {
-            log.error("The folder with path {} does not exist", path);
-            throw new ResourceNotFoundException("The requested folder could not be found");
-        }
-
         List<DeleteObject> resourcesInFolder = getResourcesNamesInFolder(path).stream()
                 .map(DeleteObject::new)
                 .collect(Collectors.toList());
