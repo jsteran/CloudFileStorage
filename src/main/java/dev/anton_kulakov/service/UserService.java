@@ -1,8 +1,8 @@
 package dev.anton_kulakov.service;
 
 import dev.anton_kulakov.dto.UserRequestDto;
-import dev.anton_kulakov.mapper.UserMapper;
 import dev.anton_kulakov.exception.UsernameAlreadyTakenException;
+import dev.anton_kulakov.mapper.UserMapper;
 import dev.anton_kulakov.model.User;
 import dev.anton_kulakov.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,20 +23,16 @@ public class UserService {
     @Transactional
     public User createUser(UserRequestDto userRequestDto) {
         String username = userRequestDto.getUsername();
+        String rawPassword = userRequestDto.getPassword();
 
-        if (userRepository.existsByUsername(username)) {
-            log.warn("User creation failed for username '{}': username is already taken.", username);
-            throw new UsernameAlreadyTakenException("User with username %s is already exists".formatted(username));
-        }
-
-        String encodedPassword = passwordEncoder.encode(userRequestDto.getPassword());
-        userRequestDto.setPassword(encodedPassword);
+        String encodedPassword = passwordEncoder.encode(rawPassword);
         User user = userMapper.toUser(userRequestDto);
+        user.setPassword(encodedPassword);
 
         try {
             return userRepository.save(user);
         } catch (DataIntegrityViolationException e) {
-            log.warn("Race condition detected during user creation for username '{}'.", username);
+            log.warn("User creation failed for username '{}'. It might already exist.", username, e);
             throw new UsernameAlreadyTakenException("User with username %s is already exists".formatted(username));
         }
     }
