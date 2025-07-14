@@ -6,6 +6,8 @@ import jakarta.validation.ConstraintValidatorContext;
 import java.text.Normalizer;
 
 public class ResourcePathValidator implements ConstraintValidator<ValidPath, String> {
+    private final static int PATH_SEGMENT_MAX_LENGTH = 20;
+
     @Override
     public boolean isValid(String path, ConstraintValidatorContext constraintValidatorContext) {
         if (path == null) {
@@ -53,6 +55,11 @@ public class ResourcePathValidator implements ConstraintValidator<ValidPath, Str
         for (String segment : segments) {
             if (segment.isEmpty()) {
                 addViolation(constraintValidatorContext, "Path can't contain empty segments (caused by consecutive slashes like 'folder//file')");
+                return false;
+            }
+
+            if (segment.length() > PATH_SEGMENT_MAX_LENGTH) {
+                addViolation(constraintValidatorContext, "Path segment '%s' shouldn't be longer than %d letters".formatted(segment, PATH_SEGMENT_MAX_LENGTH));
                 return false;
             }
 
