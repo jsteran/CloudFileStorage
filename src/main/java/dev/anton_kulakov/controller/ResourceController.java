@@ -130,9 +130,9 @@ public class ResourceController {
             @ValidPath
             @Parameter(description = "The path to the folder or file", example = "folder/file.txt") String path) {
         ResourceServiceInterface resourceService = resourceServiceFactory.getResourceService(path);
-        ResourceInfoDto resourceInfoDto = resourceService.getInfo(path);
+        ResourceInfoDto resource = resourceService.getInfo(path);
 
-        return ResponseEntity.ok().body(resourceInfoDto);
+        return ResponseEntity.ok().body(resource);
     }
 
     @Operation(summary = "Downloading a folder or a file")
@@ -415,9 +415,9 @@ public class ResourceController {
             @Parameter(description = "The new path to the folder or file that we are moving or renaming", example = "folder/new_file.txt") String to) {
         ResourceServiceInterface resourceService = resourceServiceFactory.getResourceService(from);
         String newPath = resourceService.move(from, to);
-        ResourceInfoDto resourceInfoDto = resourceService.getInfo(newPath);
+        ResourceInfoDto resource = resourceService.getInfo(newPath);
 
-        return ResponseEntity.ok().body(resourceInfoDto);
+        return ResponseEntity.ok().body(resource);
     }
 
     @Operation(summary = "Search for files and folders that match the user's search criteria")

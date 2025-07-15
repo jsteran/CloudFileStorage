@@ -235,9 +235,9 @@ public class FolderController {
             @FullPath("path")
             @ValidPath
             @Parameter(description = "The path where the new folder will be created", example = "folder/new folder/") String path) {
-        ResourceInfoDto resourceInfoDto = folderResourceService.create(path, securityUser.getUserId());
+        ResourceInfoDto resource = folderResourceService.create(path, securityUser.getUserId());
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(resourceInfoDto);
+                .body(resource);
     }
 }
