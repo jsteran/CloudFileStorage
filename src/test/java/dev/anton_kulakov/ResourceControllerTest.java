@@ -30,7 +30,7 @@ public class ResourceControllerTest extends AbstractControllerIntegrationTest {
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
                 .andExpect(jsonPath("$", instanceOf(List.class)))
                 .andExpect(jsonPath("$.length()", is(1)))
-                .andExpect(jsonPath("$[0].path", is("user-1-files/")))
+                .andExpect(jsonPath("$[0].path", is("")))
                 .andExpect(jsonPath("$[0].name", is(fileName)))
                 .andExpect(jsonPath("$[0].size", is(file.getBytes().length)))
                 .andExpect(jsonPath("$[0].type", is("FILE")));
@@ -54,12 +54,12 @@ public class ResourceControllerTest extends AbstractControllerIntegrationTest {
                 .andExpect(jsonPath("$", instanceOf(List.class)))
                 .andExpect(jsonPath("$.length()", is(2)))
 
-                .andExpect(jsonPath("$[0].path", is("user-1-files/main_folder/")))
+                .andExpect(jsonPath("$[0].path", is("main_folder/")))
                 .andExpect(jsonPath("$[0].name", is(mainFolderFileName)))
                 .andExpect(jsonPath("$[0].size", is(mainFolderFile.getBytes().length)))
                 .andExpect(jsonPath("$[0].type", is("FILE")))
 
-                .andExpect(jsonPath("$[1].path", is("user-1-files/main_folder/nested_folder/")))
+                .andExpect(jsonPath("$[1].path", is("main_folder/nested_folder/")))
                 .andExpect(jsonPath("$[1].name", is(nestedFolderFileName)))
                 .andExpect(jsonPath("$[1].size", is(nestedFolderFile.getBytes().length)))
                 .andExpect(jsonPath("$[1].type", is("FILE")));
@@ -142,7 +142,7 @@ public class ResourceControllerTest extends AbstractControllerIntegrationTest {
         mvc.perform(get("/api/resource?path=" + fileName))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$.path", is("user-1-files/")))
+                .andExpect(jsonPath("$.path", is("")))
                 .andExpect(jsonPath("$.name", is(fileName)))
                 .andExpect(jsonPath("$.size", is(file.getBytes().length)))
                 .andExpect(jsonPath("$.type", is("FILE")));
@@ -160,7 +160,7 @@ public class ResourceControllerTest extends AbstractControllerIntegrationTest {
         mvc.perform(get("/api/resource?path=main_folder/nested_folder/"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$.path", is("user-1-files/main_folder/nested_folder/")))
+                .andExpect(jsonPath("$.path", is("main_folder/nested_folder/")))
                 .andExpect(jsonPath("$.name", is("nested_folder/")))
                 .andExpect(jsonPath("$.type", is("DIRECTORY")));
     }
@@ -505,7 +505,7 @@ public class ResourceControllerTest extends AbstractControllerIntegrationTest {
                         .param("to", "new folder/" + fileName))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$.path", is("user-1-files/new folder/")))
+                .andExpect(jsonPath("$.path", is("new folder/")))
                 .andExpect(jsonPath("$.name", is(fileName)))
                 .andExpect(jsonPath("$.size", is(file.getBytes().length)))
                 .andExpect(jsonPath("$.type", is("FILE")));
@@ -524,7 +524,7 @@ public class ResourceControllerTest extends AbstractControllerIntegrationTest {
                         .param("to", "-new-" + fileName))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$.path", is("user-1-files/")))
+                .andExpect(jsonPath("$.path", is("")))
                 .andExpect(jsonPath("$.name", is("-new-" + fileName)))
                 .andExpect(jsonPath("$.size", is(file.getBytes().length)))
                 .andExpect(jsonPath("$.type", is("FILE")));
@@ -544,7 +544,7 @@ public class ResourceControllerTest extends AbstractControllerIntegrationTest {
                         .param("to", "nested_folder/"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$.path", is("user-1-files/nested_folder/")))
+                .andExpect(jsonPath("$.path", is("nested_folder/")))
                 .andExpect(jsonPath("$.name", is("nested_folder/")))
                 .andExpect(jsonPath("$.type", is("DIRECTORY")));
 
@@ -564,7 +564,7 @@ public class ResourceControllerTest extends AbstractControllerIntegrationTest {
                         .param("to", "new main folder/"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$.path", is("user-1-files/new main folder/")))
+                .andExpect(jsonPath("$.path", is("new main folder/")))
                 .andExpect(jsonPath("$.name", is("new main folder/")))
                 .andExpect(jsonPath("$.type", is("DIRECTORY")));
     }

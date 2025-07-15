@@ -21,10 +21,11 @@ public class ResourceMapper {
         return createFileInfoDto(item.objectName(), item.size());
     }
 
-    public ResourceInfoDto toFolderInfoDto(String folderPath) {
+    public ResourceInfoDto toFolderInfoDto(String fullFolderPath) {
+        String pathWithoutRootFolder = pathProcessor.getPathWithoutRootFolder(fullFolderPath);
         ResourceInfoDto resourceInfoDto = new ResourceInfoDto();
-        resourceInfoDto.setPath(folderPath);
-        resourceInfoDto.setName(pathProcessor.getLastFolderName(folderPath));
+        resourceInfoDto.setPath(pathWithoutRootFolder);
+        resourceInfoDto.setName(pathProcessor.getLastFolderName(pathWithoutRootFolder));
         resourceInfoDto.setType(ResourceTypeEnum.DIRECTORY);
 
         return resourceInfoDto;
@@ -33,9 +34,10 @@ public class ResourceMapper {
     private ResourceInfoDto createFileInfoDto(String objectName, long size) {
         ResourceInfoDto resourceInfoDto = new ResourceInfoDto();
         String fileName = pathProcessor.getFileName(objectName);
-        String folderPath = pathProcessor.getFolderPath(objectName, fileName);
+        String fullFolderPath = pathProcessor.getFolderPath(objectName, fileName);
+        String pathWithoutRootFolder = pathProcessor.getPathWithoutRootFolder(fullFolderPath);
 
-        resourceInfoDto.setPath(folderPath);
+        resourceInfoDto.setPath(pathWithoutRootFolder);
         resourceInfoDto.setName(fileName);
         resourceInfoDto.setSize(size);
         resourceInfoDto.setType(ResourceTypeEnum.FILE);

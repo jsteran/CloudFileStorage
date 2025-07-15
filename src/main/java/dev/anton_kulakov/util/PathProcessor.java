@@ -91,4 +91,9 @@ public class PathProcessor {
 
         return fullPath.substring(0, fullPathLength - folderNameLength);
     }
+
+    public String getPathWithoutRootFolder(String path) {
+        int index = path.indexOf("/") + 1;
+        return path.substring(index);
+    }
 }

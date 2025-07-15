@@ -6,7 +6,7 @@ import jakarta.validation.ConstraintValidatorContext;
 import java.text.Normalizer;
 
 public class ResourcePathValidator implements ConstraintValidator<ValidPath, String> {
-    private final static int PATH_SEGMENT_MAX_LENGTH = 20;
+    private final static int PATH_SEGMENT_MAX_LENGTH = 50;
 
     @Override
     public boolean isValid(String path, ConstraintValidatorContext constraintValidatorContext) {

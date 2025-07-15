@@ -32,11 +32,11 @@ public class FolderControllerTest extends AbstractControllerIntegrationTest {
                 .andExpect(jsonPath("$", instanceOf(List.class)))
                 .andExpect(jsonPath("$.length()", is(2)))
 
-                .andExpect(jsonPath("$[1].path", is("user-1-files/main_folder/nested_folder/")))
+                .andExpect(jsonPath("$[1].path", is("main_folder/nested_folder/")))
                 .andExpect(jsonPath("$[1].name", is("nested_folder/")))
                 .andExpect(jsonPath("$[1].type", is("DIRECTORY")))
 
-                .andExpect(jsonPath("$[0].path", is("user-1-files/main_folder/")))
+                .andExpect(jsonPath("$[0].path", is("main_folder/")))
                 .andExpect(jsonPath("$[0].name", is(mainFolderFileName)))
                 .andExpect(jsonPath("$[0].size", is(mainFolderFile.getBytes().length)))
                 .andExpect(jsonPath("$[0].type", is("FILE")));
@@ -98,7 +98,7 @@ public class FolderControllerTest extends AbstractControllerIntegrationTest {
                         .param("path", "folder/"))
                 .andExpect(status().isCreated())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_VALUE))
-                .andExpect(jsonPath("$.path", is("user-1-files/folder/")))
+                .andExpect(jsonPath("$.path", is("folder/")))
                 .andExpect(jsonPath("$.name", is("folder/")))
                 .andExpect(jsonPath("$.type", is("DIRECTORY")));
     }
