@@ -21,12 +21,12 @@ public class JsonAuthenticationFilter extends UsernamePasswordAuthenticationFilt
     private final SecurityContextUtil securityContextUtil;
 
     @Override
-    public Authentication attemptAuthentication(HttpServletRequest req, HttpServletResponse resp) {
+    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) {
         try {
-            UserRequestDto userRequestDto = objectMapper.readValue(req.getInputStream(), UserRequestDto.class);
+            UserRequestDto userRequestDto = objectMapper.readValue(request.getInputStream(), UserRequestDto.class);
             UsernamePasswordAuthenticationToken usernamePasswordAuthenticationToken = new UsernamePasswordAuthenticationToken(userRequestDto.getUsername(), userRequestDto.getPassword());
             Authentication authentication = this.getAuthenticationManager().authenticate(usernamePasswordAuthenticationToken);
-            securityContextUtil.setAuthentication(authentication, req, resp);
+            securityContextUtil.setAuthentication(authentication, request, response);
             return authentication;
         } catch (IOException e) {
             log.error("Failed to parse authentication request JSON. Invalid format or I/O error", e);
