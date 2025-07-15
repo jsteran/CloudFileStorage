@@ -30,7 +30,10 @@ public class FullPathArgumentResolver implements HandlerMethodArgumentResolver {
     }
 
     @Override
-    public Object resolveArgument(@NotNull MethodParameter parameter, ModelAndViewContainer mavContainer, @NotNull NativeWebRequest webRequest, WebDataBinderFactory binderFactory) throws Exception {
+    public Object resolveArgument(@NotNull MethodParameter parameter,
+                                  ModelAndViewContainer mavContainer,
+                                  @NotNull NativeWebRequest webRequest,
+                                  WebDataBinderFactory binderFactory) throws Exception {
         SecurityUser securityUser = getSecurityUser();
         FullPath annotation = parameter.getParameterAnnotation(FullPath.class);
 

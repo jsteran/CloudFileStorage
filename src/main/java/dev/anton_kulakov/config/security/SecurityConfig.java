@@ -101,17 +101,17 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    private void onAuthenticationSuccess(HttpServletRequest req, HttpServletResponse resp, Authentication authentication) throws IOException {
-        resp.setStatus(HttpStatus.OK.value());
-        resp.setContentType("application/json");
-        Map<String, String> response = Map.of("username", authentication.getName());
-        objectMapper.writeValue(resp.getWriter(), response);
+    private void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
+        response.setStatus(HttpStatus.OK.value());
+        response.setContentType("application/json");
+        Map<String, String> responseMessage = Map.of("username", authentication.getName());
+        objectMapper.writeValue(response.getWriter(), responseMessage);
     }
 
-    private void onAuthenticationFailure(HttpServletRequest req, HttpServletResponse resp, AuthenticationException authenticationException) throws IOException {
-        resp.setStatus(HttpStatus.UNAUTHORIZED.value());
-        resp.setContentType("application/json");
-        Map<String, String> response = Map.of("message", "Invalid credentials");
-        objectMapper.writeValue(resp.getWriter(), response);
+    private void onAuthenticationFailure(HttpServletRequest request, HttpServletResponse response, AuthenticationException authenticationException) throws IOException {
+        response.setStatus(HttpStatus.UNAUTHORIZED.value());
+        response.setContentType("application/json");
+        Map<String, String> responseMessage = Map.of("message", "Invalid credentials");
+        objectMapper.writeValue(response.getWriter(), responseMessage);
     }
 }
