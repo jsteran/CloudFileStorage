@@ -1,4 +1,4 @@
-package dev.anton_kulakov.controller;
+package dev.anton_kulakov.listener;
 
 import dev.anton_kulakov.model.User;
 import dev.anton_kulakov.service.MinioService;

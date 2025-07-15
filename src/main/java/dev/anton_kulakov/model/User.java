@@ -1,6 +1,6 @@
 package dev.anton_kulakov.model;
 
-import dev.anton_kulakov.controller.UserListener;
+import dev.anton_kulakov.listener.UserListener;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
