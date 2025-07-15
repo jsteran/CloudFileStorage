@@ -15,10 +15,10 @@ import org.springframework.stereotype.Component;
 public class SecurityContextUtil {
     private final SecurityContextRepository securityContextRepository = new HttpSessionSecurityContextRepository();
 
-    public void setAuthentication(Authentication authentication, HttpServletRequest req, HttpServletResponse resp) {
+    public void setAuthentication(Authentication authentication, HttpServletRequest request, HttpServletResponse response) {
         SecurityContext context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authentication);
         SecurityContextHolder.setContext(context);
-        securityContextRepository.saveContext(context, req, resp);
+        securityContextRepository.saveContext(context, request, response);
     }
 }
