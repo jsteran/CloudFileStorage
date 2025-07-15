@@ -129,8 +129,8 @@ public class ResourceController {
             @FullPath("path")
             @ValidPath
             @Parameter(description = "The path to the folder or file", example = "folder/file.txt") String path) {
-        ResourceServiceInterface resourceHandler = resourceServiceFactory.getResourceHandler(path);
-        ResourceInfoDto resourceInfoDto = resourceHandler.getInfo(path);
+        ResourceServiceInterface resourceService = resourceServiceFactory.getResourceService(path);
+        ResourceInfoDto resourceInfoDto = resourceService.getInfo(path);
 
         return ResponseEntity.ok().body(resourceInfoDto);
     }
@@ -304,8 +304,8 @@ public class ResourceController {
             @FullPath("path")
             @ValidPath
             @Parameter(description = "The path to the folder or file that you want to delete", example = "folder/file.txt") String path) {
-        ResourceServiceInterface resourceHandler = resourceServiceFactory.getResourceHandler(path);
-        resourceHandler.delete(path);
+        ResourceServiceInterface resourceService = resourceServiceFactory.getResourceService(path);
+        resourceService.delete(path);
 
         return ResponseEntity.noContent().build();
     }
@@ -413,9 +413,9 @@ public class ResourceController {
             @FullPath("to")
             @ValidPath
             @Parameter(description = "The new path to the folder or file that we are moving or renaming", example = "folder/new_file.txt") String to) {
-        ResourceServiceInterface resourceHandler = resourceServiceFactory.getResourceHandler(from);
-        String newPath = resourceHandler.move(from, to);
-        ResourceInfoDto resourceInfoDto = resourceHandler.getInfo(newPath);
+        ResourceServiceInterface resourceService = resourceServiceFactory.getResourceService(from);
+        String newPath = resourceService.move(from, to);
+        ResourceInfoDto resourceInfoDto = resourceService.getInfo(newPath);
 
         return ResponseEntity.ok().body(resourceInfoDto);
     }

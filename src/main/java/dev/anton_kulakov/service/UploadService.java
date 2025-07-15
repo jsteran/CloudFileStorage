@@ -14,7 +14,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UploadService {
     private final MinioService minioService;
-    private final FileResourceService fileResourceHandler;
+    private final FileResourceService fileResourceService;
 
     public List<ResourceInfoDto> upload(String path, List<MultipartFile> files) {
         List<ResourceInfoDto> uploadedResources = new ArrayList<>();
@@ -22,7 +22,7 @@ public class UploadService {
         for (MultipartFile file : files) {
             String fullPath = path + file.getOriginalFilename();
             minioService.upload(fullPath, file, true);
-            uploadedResources.add(fileResourceHandler.getInfo(fullPath));
+            uploadedResources.add(fileResourceService.getInfo(fullPath));
         }
 
         return uploadedResources;

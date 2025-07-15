@@ -33,7 +33,7 @@ import java.util.List;
 @RequestMapping("/api/directory")
 @Tag(name = OpenApiConfig.FOLDER_TAG)
 public class FolderController {
-    private final FolderResourceService folderResourceHandler;
+    private final FolderResourceService folderResourceService;
 
     @Operation(summary = "Getting folder contents")
     @ApiResponses(value = {
@@ -119,7 +119,7 @@ public class FolderController {
             @ValidPath
             @FullPath("path")
             @Parameter(description = "The path to the folder containing the content the user is interested in", example = "folder/") String path) {
-        List<ResourceInfoDto> resources = folderResourceHandler.getContent(path);
+        List<ResourceInfoDto> resources = folderResourceService.getContent(path);
         return ResponseEntity.ok(resources);
     }
 
@@ -235,7 +235,7 @@ public class FolderController {
             @FullPath("path")
             @ValidPath
             @Parameter(description = "The path where the new folder will be created", example = "folder/new folder/") String path) {
-        ResourceInfoDto resourceInfoDto = folderResourceHandler.create(path, securityUser.getUserId());
+        ResourceInfoDto resourceInfoDto = folderResourceService.create(path, securityUser.getUserId());
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(resourceInfoDto);

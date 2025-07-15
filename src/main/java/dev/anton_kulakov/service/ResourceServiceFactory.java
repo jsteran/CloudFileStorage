@@ -6,15 +6,15 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class ResourceServiceFactory {
-    private final FileResourceService fileResourceHandler;
-    private final FolderResourceService folderResourceHandler;
+    private final FileResourceService fileResourceService;
+    private final FolderResourceService folderResourceService;
     private final static String MINIO_FOLDER_PATH_MARKER = "/";
 
-    public ResourceServiceInterface getResourceHandler(String path) {
+    public ResourceServiceInterface getResourceService(String path) {
         if (path.endsWith(MINIO_FOLDER_PATH_MARKER)) {
-            return folderResourceHandler;
+            return folderResourceService;
         }
 
-        return fileResourceHandler;
+        return fileResourceService;
     }
 }
