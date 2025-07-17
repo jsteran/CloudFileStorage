@@ -54,6 +54,11 @@ public class RegistrationControllerTest {
 
         registry.add("spring.data.redis.host", redis::getHost);
         registry.add("spring.data.redis.port", () -> redis.getMappedPort(6379).toString());
+
+        registry.add("minio.endpoint", () -> "http://localhost:9000");
+        registry.add("minio.access-key", () -> "minioadmin");
+        registry.add("minio.secret-key", () -> "minioadmin");
+        registry.add("minio.bucket-name", () -> "test-bucket-name");
     }
 
     @Test
