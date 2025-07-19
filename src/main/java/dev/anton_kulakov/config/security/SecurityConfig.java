@@ -24,6 +24,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
+import org.springframework.session.web.http.CookieSerializer;
+import org.springframework.session.web.http.DefaultCookieSerializer;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -66,6 +68,16 @@ public class SecurityConfig {
                         .invalidateHttpSession(true)
                         .deleteCookies("SESSION"))
                 .build();
+    }
+
+    @Bean
+    public CookieSerializer cookieSerializer() {
+        DefaultCookieSerializer serializer = new DefaultCookieSerializer();
+        serializer.setCookieMaxAge(24 * 60 * 60);
+        serializer.setUseHttpOnlyCookie(true);
+        serializer.setSameSite("Strict");
+        serializer.setCookieName("CUSTOM_SESSION");
+        return serializer;
     }
 
     @Bean
